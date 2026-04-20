@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recruiter Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    #companyDescription.company-description-over-limit {
+      border-color: #dc2626;
+      border-width: 2px;
+    }
+  </style>
+</head>
+<body class="dashboard-page">
+  <header class="dashboard-topbar">
+    <div class="brand">
+      <img src="/images/ta-logo.png" alt="HireNest logo" class="brand-logo">
+      <h1>HireNest</h1>
+    </div>
+    <nav>
+      <a href="/index.html">Home</a>
+      <a href="/dashboard/job-seeker.html">Job Seeker</a>
+      <a href="/dashboard/recruiter.html">Recruiter</a>
+    </nav>
+  </header>
+  <main>
+    <div class="row animate-on-scroll fade-in">
+      <h2>Recruiter Dashboard</h2>
+      <button type="button" id="logoutBtn" class="secondary-btn">Logout</button>
+    </div>
+    <section class="dashboard-hero-strip animate-on-scroll fade-up">
+      <div>
+        <div class="hero-kicker">Hiring Operations Hub</div>
+        <h3>Monitor pipeline health, shortlist faster, and optimize outcomes.</h3>
+        <p class="muted">A clear, premium dashboard for talent acquisition decisions.</p>
+      </div>
+      <span class="hero-chip">Recruiter View</span>
+    </section>
+    <div class="tabs animate-on-scroll fade-up">
+      <button type="button" class="dashboard-tab-btn active" data-target="tabRecOverview">Overview</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabRecProfile">Recruiter Profile</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabRecJob">Post Job</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabRecCandidates">Candidates</button>
+    </div>
+    <section id="tabRecOverview" class="tab-panel animate-on-scroll fade-up">
+    <div class="dashboard-section-header">
+      <h3>Top Summary</h3>
+      <p class="muted">Core hiring KPIs for quick recruiter decisions.</p>
+    </div>
+    <div class="dashboard-stat-grid">
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Total jobs</div>
+        <div class="dashboard-stat-value" id="recTotalJobs">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Total applicants</div>
+        <div class="dashboard-stat-value" id="recTotalApplicants">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Shortlisted</div>
+        <div class="dashboard-stat-value" id="recShortlistedHighlight">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V7l5-4h8l5 4v12a2 2 0 01-2 2z"/><path d="M9 10h6M9 14h6"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Rejected</div>
+        <div class="dashboard-stat-value" id="recRejectedHighlight">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18"/><path d="M5 7v12a2 2 0 002 2h10a2 2 0 002-2V7"/><path d="M9 11h6"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Active Openings</div>
+        <div class="dashboard-stat-value" id="recActiveOpenings">0</div>
+      </div>
+    </div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>AI Insights</h3>
+      <p class="muted">Hiring signals from your candidate pool and pipeline — powered by your existing data.</p>
+    </div>
+    <div id="recruiterAiInsights" class="ai-insights-grid"></div>
+
+    <div class="row">
+      <div class="card dashboard-stat-card compact"><b>Jobs posted</b><div id="jobsPostedCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Candidate rows (pool)</b><div id="candidateRowsCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Avg skills / job</b><div id="avgSkillsPerJob">0</div></div>
+    </div>
+    <div class="row">
+      <div class="card dashboard-stat-card compact"><b>Applied</b><div id="appliedCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Shortlisted</b><div id="shortlistedCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Rejected</b><div id="rejectedCount">0</div></div>
+    </div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>Candidate Insights</h3>
+      <p class="muted">Quick snapshot of candidate pool quality and hiring traction.</p>
+    </div>
+    <div class="row">
+      <div class="card dashboard-stat-card compact"><b>Candidate rows (pool)</b><div id="candidateRowsCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Avg skills / job</b><div id="avgSkillsPerJob">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Jobs posted</b><div id="jobsPostedCount">0</div></div>
+    </div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>Application Pipeline</h3>
+      <p class="muted">Status-based hiring workflow for faster decisions.</p>
+    </div>
+    <div class="row">
+      <div class="card dashboard-stat-card compact"><b>Applied</b><div id="appliedCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Shortlisted</b><div id="shortlistedCount">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Rejected</b><div id="rejectedCount">0</div></div>
+    </div>
+    <div id="applicationsPipeline"></div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>Analytics & Charts</h3>
+      <p class="muted">Filter analytics by job to evaluate pipeline quality.</p>
+    </div>
+    <div class="row" style="margin-top: 10px;">
+      <div class="card">
+        <b>Job Filter</b>
+        <div class="muted" style="margin-top: 4px;">Use this to focus analytics for one job.</div>
+        <select id="recruiterJobFilter" style="margin-top: 8px;">
+          <option value="ALL" selected>All Jobs</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chart-grid" style="margin-top: 16px;">
+      <div class="card chart-card animate-on-scroll fade-up">
+        <b>Job Performance (Views vs Applications)</b>
+        <div class="muted" style="margin: 6px 0 10px;">Compare candidate views with application conversion.</div>
+        <div class="chart-wrap">
+          <canvas id="jobPerformanceBar"></canvas>
+        </div>
+      </div>
+
+      <div class="card chart-card animate-on-scroll fade-up">
+        <b>Candidate Skill Distribution</b>
+        <div class="muted" style="margin: 6px 0 10px;">Top candidate skills across selected jobs.</div>
+        <div class="chart-wrap">
+          <canvas id="candidateSkillDoughnut"></canvas>
+        </div>
+      </div>
+
+      <div class="card chart-card animate-on-scroll fade-up">
+        <b>Hiring Funnel (Applied → Shortlisted → Rejected)</b>
+        <div class="muted" style="margin-top: 6px; font-size: 13px;">Interview/Selected stages are not stored in this version.</div>
+        <div class="chart-wrap">
+          <canvas id="hiringFunnelBar"></canvas>
+        </div>
+      </div>
+    </div>
+    </section>
+    <section id="tabRecProfile" class="card tab-panel hidden">
+      <h3>Create Recruiter Profile</h3>
+      <form id="recruiterProfileForm">
+        <input id="companyName" placeholder="Company Name" required>
+        <textarea id="companyDescription" placeholder="Company Description"></textarea>
+        <p id="companyDescriptionWordCount" class="muted" style="margin-top:8px;margin-bottom:0;font-size:0.9rem;">0 / 5000 words</p>
+        <p id="companyDescriptionWordLimitError" class="muted" hidden style="color:#dc2626;margin-top:4px;margin-bottom:0;font-size:0.9rem;">Word limit exceeded (Max 5000 words)</p>
+        <button type="submit">Save Recruiter Profile</button>
+      </form>
+    </section>
+    <section id="tabRecJob" class="card tab-panel hidden">
+      <h3>Post Job</h3>
+      <form id="jobForm">
+        <input id="title" placeholder="Job title" required>
+        <textarea id="description" placeholder="Description" required></textarea>
+        <input id="requiredSkills" placeholder="Required skills (comma separated)" required>
+        <input id="location" placeholder="Location">
+        <div class="row">
+          <input id="salaryMin" type="number" placeholder="Min salary">
+          <input id="salaryMax" type="number" placeholder="Max salary">
+        </div>
+        <button type="submit">Post Job</button>
+      </form>
+    </section>
+    <section class="card animate-on-scroll fade-up">
+      <h3>My Jobs</h3>
+      <div id="jobs"></div>
+    </section>
+    <section id="tabRecCandidates" class="card tab-panel hidden">
+      <h3>Candidates by job</h3>
+      <p class="muted">Ranked by match score and skill overlap. Use filters to narrow the pool.</p>
+      <div class="candidate-filters row">
+        <input id="candFilterSkill" placeholder="Filter by skill (e.g. java)">
+        <input id="candFilterMinExp" type="number" min="0" placeholder="Min experience (years)">
+        <input id="candFilterMinMatch" type="number" min="0" max="100" placeholder="Min match %">
+        <button type="button" id="candFilterApply" class="filter-btn">Apply filters</button>
+        <button type="button" id="candFilterReset" class="filter-btn">Reset</button>
+      </div>
+      <div id="candidates"></div>
+    </section>
+  </main>
+  <script src="/script.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <div id="candidateModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="candidateModalTitle">
+    <div class="modal-card card">
+      <div class="modal-head">
+        <h3 id="candidateModalTitle">Candidate</h3>
+        <button type="button" id="candidateModalClose" class="secondary-btn">Close</button>
+      </div>
+      <div id="candidateModalBody" class="modal-body"></div>
+    </div>
+  </div>
+  <script src="/dashboard/recruiter.js"></script>
+</body>
+</html>

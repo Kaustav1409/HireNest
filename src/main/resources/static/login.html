@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="auth-page" data-google-client-id="212570088909-jgdkgiavkb23nvhlngiep5pq6p03liup.apps.googleusercontent.com">
+  <header class="auth-topbar">
+    <div class="brand">
+      <img src="/images/ta-logo.png" alt="HireNest logo" class="brand-logo">
+      <h1>HireNest</h1>
+    </div>
+    <nav>
+      <a href="/index.html">Home</a>
+      <a href="/register.html">Register</a>
+    </nav>
+  </header>
+  <main class="auth-main">
+    <section class="auth-shell animate-on-scroll scale-in">
+    <div class="auth-kicker">Welcome back</div>
+    <h2 class="animate-on-scroll fade-in">Login to HireNest</h2>
+    <p class="muted">Continue your hiring and career journey with your dashboard.</p>
+    <form id="loginForm" class="auth-form" autocomplete="off">
+      <div class="field">
+        <input id="email" type="email" placeholder=" " required autocomplete="off" autocapitalize="none" spellcheck="false">
+        <label for="email">Email</label>
+      </div>
+      <div class="field">
+        <input id="password" type="password" placeholder=" " required autocomplete="new-password">
+        <label for="password">Password</label>
+        <button type="button" id="toggleLoginPassword" class="password-toggle">Show</button>
+      </div>
+      <div class="auth-row">
+        <label class="check-inline">
+          <input id="rememberMe" type="checkbox">
+          <span>Remember email</span>
+        </label>
+        <a href="/forgot-password.html">Forgot Password?</a>
+      </div>
+      <p id="loginMsg" class="auth-msg hidden"></p>
+      <button type="submit" class="ripple-container">Login</button>
+      <div class="auth-divider"><span>or</span></div>
+      <div id="googleLoginButton"></div>
+    </form>
+    <p>No account? <a href="/register.html">Register</a></p>
+    </section>
+  </main>
+  <script src="/script.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/js/api.js"></script>
+  <script src="/login.js"></script>
+</body>
+</html>

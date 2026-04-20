@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Seeker Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="dashboard-page">
+  <header class="dashboard-topbar">
+    <div class="brand">
+      <img src="/images/ta-logo.png" alt="HireNest logo" class="brand-logo">
+      <h1>HireNest</h1>
+    </div>
+    <nav>
+      <a href="/index.html">Home</a>
+      <a href="/dashboard/job-seeker.html">Job Seeker</a>
+      <a href="/dashboard/recruiter.html">Recruiter</a>
+    </nav>
+  </header>
+  <main>
+    <div class="row animate-on-scroll fade-in">
+      <h2>Job Seeker Dashboard</h2>
+      <button id="logoutBtn" type="button" class="secondary-btn">Logout</button>
+    </div>
+    <section class="dashboard-hero-strip animate-on-scroll fade-up">
+      <div>
+        <div class="hero-kicker">Career Command Center</div>
+        <h3>Track progress, improve profile strength, and apply smarter.</h3>
+        <p class="muted">A premium overview of recommendations, learning gaps, and hiring activity.</p>
+      </div>
+      <span class="hero-chip">Job Seeker View</span>
+    </section>
+    <div class="tabs animate-on-scroll fade-up">
+      <button type="button" class="dashboard-tab-btn active" data-target="tabOverview">Overview</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabProfile">Profile</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabResume">Resume</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabQuiz">Assessment</button>
+      <button type="button" class="dashboard-tab-btn" data-target="tabJobs">Recommended Jobs</button>
+    </div>
+    <section id="tabOverview" class="tab-panel animate-on-scroll fade-up">
+    <div class="dashboard-section-header">
+      <h3>Top Summary</h3>
+      <p class="muted">Quick snapshot of your profile and activity.</p>
+    </div>
+    <div class="dashboard-stat-grid">
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Total Applications</div>
+        <div class="dashboard-stat-value" id="totalApplications">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Saved Jobs</div>
+        <div class="dashboard-stat-value" id="savedJobsCount">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Recommended Jobs</div>
+        <div class="dashboard-stat-value" id="matchedJobsCount">0</div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Latest Quiz Score</div>
+        <div class="dashboard-stat-value" id="latestQuizScore">0%</div>
+        <div class="dashboard-stat-helper">Most recent assessment result</div>
+        <div class="dashboard-stat-helper dashboard-stat-learning-hint" id="latestQuizLearningLine" style="display: none;"></div>
+      </div>
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12A10 10 0 1 1 12 2"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        </div>
+        <div class="dashboard-stat-label">Profile Completion</div>
+        <div class="dashboard-stat-value" id="profileCompletionStat">0%</div>
+        <div class="dashboard-stat-helper">Higher completion improves matching</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: 8px;">
+      <div class="card dashboard-stat-card compact"><b>Open roles (platform)</b><div id="totalJobs">0</div></div>
+      <div class="card dashboard-stat-card compact"><b>Avg quiz score</b><div id="avgQuizScore">0%</div></div>
+    </div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>AI Insights</h3>
+      <p class="muted">Signals from your matches, skill gaps, quiz, and profile — same data as the rest of the dashboard.</p>
+    </div>
+    <div id="jobSeekerAiInsights" class="ai-insights-grid"></div>
+
+    <div class="card profile-completion-card" style="margin-top: 14px;">
+      <div class="profile-completion-head">
+        <div>
+          <b>Profile Completion Score</b>
+          <div class="muted">Complete your profile to improve matching quality.</div>
+        </div>
+        <span id="profileCompletionBadge" class="meta-chip">0%</span>
+      </div>
+      <div class="profile-completion-bar">
+        <div id="profileCompletionFill" class="profile-completion-fill" style="width: 0%;"></div>
+      </div>
+      <div id="missingProfileItems" class="missing-items-list muted">Add your details to unlock better recommendations.</div>
+    </div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>Recommended Jobs Snapshot</h3>
+      <p class="muted">Top opportunities based on your current profile strength.</p>
+    </div>
+    <div id="overviewRecommendedJobs" class="tracking-list">
+      <div class="tracking-empty">No recommended jobs available. Complete your profile first.</div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <b>🔥 Skill Gap & Learning Suggestions</b>
+      <div class="muted" style="margin-top: 4px;">We suggest what to learn based on your job match gaps.</div>
+      <div id="skillSuggestionsOverview" data-skeleton="suggestions" style="margin-top: 12px;"></div>
+    </div>
+
+    <div class="card animate-on-scroll fade-up" style="margin-top: 16px;">
+      <h3>Applications Tracker</h3>
+      <p class="muted">Track saved jobs and your hiring progress in one place.</p>
+      <div class="row tracking-sections">
+        <div>
+          <b>Saved Jobs</b>
+          <div id="savedJobsList" class="tracking-list muted">No saved jobs.</div>
+        </div>
+        <div>
+          <b>Applications</b>
+          <div id="applicationsList" class="tracking-list muted">No applications.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-section-header" style="margin-top: 18px;">
+      <h3>Analytics & Charts</h3>
+      <p class="muted">Understand matching quality and application trends.</p>
+    </div>
+    <div class="row" style="margin-top: 18px;">
+      <div class="card">
+        <b>Radar Source</b>
+        <div class="muted" style="margin-top: 4px;">Pick a recommended job to see skill gaps.</div>
+        <select id="radarJobFilter" style="margin-top: 8px;"></select>
+      </div>
+      <div class="card">
+        <b>Activity Range</b>
+        <div class="muted" style="margin-top: 4px;">Weekly or Monthly application activity.</div>
+        <select id="activityRangeFilter" style="margin-top: 8px;">
+          <option value="weekly" selected>Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chart-grid" style="margin-top: 16px;">
+      <div class="card chart-card animate-on-scroll fade-up">
+        <b>Skill Match (Radar)</b>
+        <div class="muted" style="margin: 6px 0 10px;">Your skills vs required skills for the selected job.</div>
+        <div class="chart-wrap">
+          <canvas id="skillMatchRadar"></canvas>
+        </div>
+        <div id="radarHint" class="muted" style="font-size: 13px; margin-top: 8px;"></div>
+      </div>
+
+      <div class="card chart-card animate-on-scroll fade-up">
+        <b>Application Status (Pie)</b>
+        <div class="muted" style="margin: 6px 0 10px;">Distribution of your applications across stages.</div>
+        <div class="chart-wrap">
+          <canvas id="applicationStatusPie"></canvas>
+        </div>
+      </div>
+
+      <div class="card chart-card animate-on-scroll fade-up">
+        <b>Application Activity (Line)</b>
+        <div class="muted" style="margin: 6px 0 10px;">Applications over time grouped by the selected range.</div>
+        <div class="chart-wrap">
+          <canvas id="weeklyActivityLine"></canvas>
+        </div>
+      </div>
+    </div>
+
+    </section>
+    <section id="tabProfile" class="card tab-panel hidden">
+      <h3>My Profile</h3>
+      <form id="profileForm">
+        <input id="skills" placeholder="Skills (comma separated)">
+        <input id="preferredRoles" placeholder="Preferred Roles (e.g., Backend Developer, Data Analyst)">
+        <input id="location" placeholder="Location (e.g., Kolkata, India)">
+        <label style="display:flex; align-items:center; gap:10px; margin: 10px 0; font-weight:600; color: var(--text);">
+          <input id="remotePreferred" type="checkbox" style="width:auto; margin:0;">
+          Open to remote jobs
+        </label>
+        <input id="experienceYears" type="number" placeholder="Experience (years)">
+        <textarea id="bio" placeholder="Bio"></textarea>
+        <button type="submit">Save Profile</button>
+      </form>
+    </section>
+    <section id="tabResume" class="card tab-panel hidden">
+      <div class="resume-section-head">
+        <div>
+          <h3>Resume</h3>
+          <p class="muted">Upload your latest PDF resume for smarter skill detection and better matching.</p>
+        </div>
+        <span class="meta-chip">PDF • Max 10MB</span>
+      </div>
+      <div id="resumeUploadedBanner" class="resume-banner hidden">
+        <span class="resume-check">Resume uploaded <span class="resume-ok" aria-hidden="true">✓</span></span>
+        <div class="resume-filename" id="resumeFileNameDisplay"></div>
+      </div>
+      <form id="resumeForm" class="resume-form-shell">
+        <input id="resumeFile" type="file" accept="application/pdf,.pdf" class="hidden-file-input">
+        <div class="resume-actions">
+          <button type="button" id="pickResumeBtn" class="action-btn">Choose PDF</button>
+          <button type="submit" id="uploadResumeBtn">Upload Resume</button>
+          <button type="button" id="replaceResumeBtn" class="action-btn hidden">Replace Resume</button>
+        </div>
+      </form>
+      <div id="detectedSkillsBox" class="card detected-skills-card hidden">
+        <div class="detected-skills-head">
+          <b>Detected Skills from Resume</b>
+          <span class="meta-chip remote">Auto Parsed</span>
+        </div>
+        <div id="detectedSkillsText" class="muted">No detected skills yet.</div>
+        <div id="detectedSkillsChips" class="skill-chip-row" style="margin-top: 8px;"></div>
+        <div id="mergedSkillsWrap" class="hidden merged-skills-wrap">
+          <div class="muted" style="font-size: 12px;">Updated Profile Skills (Auto-merged)</div>
+          <div id="mergedSkillsChips" class="skill-chip-row resume-merged-skills" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+      <div id="resumeStatus" class="muted" style="margin-top: 10px;">No resume uploaded yet.</div>
+      <a id="resumeDownloadLink" href="#" class="hidden" style="display: inline-block; margin-top: 8px;">Download current resume</a>
+    </section>
+    <section id="tabQuiz" class="tab-panel hidden assessment-tab">
+      <div class="dashboard-section-header">
+        <h3>Skills Assessment</h3>
+        <p class="muted">Pick a domain, optionally narrow by difficulty, then start. Multiple-choice questions refresh each attempt; your latest score appears on the overview and in insights.</p>
+      </div>
+
+      <section class="quiz-personalized-section card quiz-recommended-wrap" aria-labelledby="recommendedAssessmentsHeading">
+        <div class="quiz-recommended-head">
+          <span class="quiz-setup-kicker">Personalized</span>
+          <h3 id="recommendedAssessmentsHeading" class="quiz-recommended-heading">Recommended Assessments for You</h3>
+          <p class="muted quiz-recommended-sub">Based on your saved and resume-extracted skills. Use <strong>All Assessments</strong> below to pick any skill manually — the full grid, difficulty filter, and start button work the same as before.</p>
+        </div>
+        <div id="quizRecommendedLoading" class="quiz-recommended-loading hidden" aria-live="polite" aria-busy="true"></div>
+        <div id="quizRecommendedGrid" class="quiz-recommended-grid" role="list" aria-label="Recommended assessment domains"></div>
+        <p id="quizRecommendedEmpty" class="muted quiz-recommended-empty hidden" role="status">
+          No personalized assessment recommendations yet. Upload resume or complete profile to get recommendations.
+        </p>
+      </section>
+
+      <div class="card quiz-setup-card">
+        <div class="quiz-setup-head">
+          <span class="quiz-setup-kicker">Configure</span>
+          <div class="quiz-setup-title-row">
+            <b>Assessment setup</b>
+            <span class="meta-chip" id="quizSelectedDomainLabel">—</span>
+          </div>
+          <p class="muted quiz-setup-desc">Select one skill area. Difficulty filters the pool; leave &ldquo;All levels&rdquo; for the full set.</p>
+        </div>
+
+        <div class="quiz-field-label">Search skill</div>
+        <input id="quizSearchInput" type="text" placeholder="Search assessments by skill name">
+
+        <div class="quiz-field-label" id="domainGridLabel">All Assessments</div>
+        <div id="quizDomainGrid" class="quiz-domain-grid" role="radiogroup" aria-labelledby="domainGridLabel"></div>
+
+        <div class="quiz-setup-actions">
+          <div class="field quiz-field quiz-field-difficulty">
+            <select id="quizDifficultySelect" aria-label="Difficulty (optional)">
+              <option value="">All levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+            <label for="quizDifficultySelect">Difficulty (optional)</label>
+          </div>
+          <button type="button" id="startAssessmentBtn" class="btn-assessment-primary">Start Assessment</button>
+        </div>
+      </div>
+
+      <div class="card quiz-session-card">
+        <div class="quiz-session-head">
+          <div>
+            <span class="quiz-setup-kicker">Your quiz</span>
+            <b id="quizSessionTitle">Ready when you are</b>
+            <div id="quizQuestionsLoadedLabel" class="quiz-questions-loaded-label muted">Questions loaded: 0</div>
+          </div>
+          <div id="quizSessionMeta" class="quiz-session-meta muted hidden" aria-live="polite"></div>
+        </div>
+
+        <div id="quizEmptyState" class="quiz-empty-state">
+          <div class="quiz-empty-icon" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
+          </div>
+          <p class="quiz-empty-title">No assessment loaded yet</p>
+          <p class="muted quiz-empty-text">Choose a domain above and click <strong>Start Assessment</strong> to load questions.</p>
+        </div>
+
+        <div id="quizLoadingState" class="quiz-loading-state hidden">
+          <div class="quiz-loading-dot"></div>
+          <span>Loading questions…</span>
+        </div>
+
+        <div id="quizContainer" class="quiz-questions-stack hidden" aria-live="polite"></div>
+
+        <div id="quizSubmitRow" class="quiz-submit-row hidden">
+          <button type="button" id="submitQuizBtn" class="btn-assessment-secondary">Submit answers</button>
+          <p class="muted quiz-submit-hint">Answer every question for the best score. You can retake anytime.</p>
+        </div>
+
+        <div id="quizResultPanel" class="quiz-result-panel hidden" role="region" aria-labelledby="quizResultHeading">
+          <div class="quiz-result-panel-inner">
+            <div class="quiz-result-hero">
+              <span class="quiz-setup-kicker">Your results</span>
+              <h4 id="quizResultHeading" class="quiz-result-heading">Assessment complete</h4>
+              <div class="quiz-result-badges">
+                <span id="quizResultDomainBadge" class="meta-chip"></span>
+                <span id="quizResultDifficultyBadge" class="meta-chip muted-chip hidden"></span>
+                <span id="quizResultLevelBadge" class="quiz-result-level-badge"></span>
+              </div>
+            </div>
+
+            <div class="quiz-result-score-ring-wrap">
+              <div class="quiz-result-score-ring" id="quizResultScoreRing" aria-hidden="true">
+                <span class="quiz-result-score-pct" id="quizResultScorePct">0%</span>
+              </div>
+              <p class="quiz-result-score-caption muted">Score</p>
+            </div>
+
+            <div class="quiz-result-stats-grid">
+              <div class="quiz-result-stat">
+                <span class="quiz-result-stat-label">Correct</span>
+                <span class="quiz-result-stat-value" id="quizResultCorrect">0</span>
+              </div>
+              <div class="quiz-result-stat">
+                <span class="quiz-result-stat-label">Total</span>
+                <span class="quiz-result-stat-value" id="quizResultTotal">0</span>
+              </div>
+              <div class="quiz-result-stat">
+                <span class="quiz-result-stat-label">Time</span>
+                <span class="quiz-result-stat-value" id="quizResultDuration">0s</span>
+              </div>
+            </div>
+
+            <div class="quiz-result-progress-wrap" aria-hidden="true">
+              <div class="quiz-result-progress-track">
+                <div class="quiz-result-progress-fill" id="quizResultProgressFill"></div>
+              </div>
+            </div>
+
+            <p id="quizResultFeedback" class="quiz-result-feedback"></p>
+
+            <div id="quizResultLearning" class="quiz-result-learning hidden">
+              <div class="quiz-learning-head">
+                <span class="quiz-setup-kicker">Learning &amp; next steps</span>
+                <b class="quiz-learning-title">Improve this skill</b>
+                <p class="muted quiz-learning-sub">Uses the same resource style as job skill-gap suggestions.</p>
+              </div>
+              <div id="quizResultTopicsWrap" class="quiz-learning-section">
+                <span class="quiz-learning-label">Topics to strengthen</span>
+                <ul id="quizResultTopics" class="quiz-learning-topics"></ul>
+              </div>
+              <div id="quizResultResourcesSection" class="quiz-learning-section">
+                <span class="quiz-learning-label">Resources</span>
+                <div id="quizResultResources" class="quiz-learning-resources"></div>
+              </div>
+              <p id="quizResultNextLearning" class="quiz-learning-line"></p>
+              <p id="quizResultRoleFit" class="quiz-learning-line quiz-learning-line--fit"></p>
+              <p id="quizResultNextAssessment" class="quiz-learning-line muted quiz-learning-line--hint"></p>
+            </div>
+
+            <div class="quiz-result-actions">
+              <button type="button" id="quizRetakeBtn" class="btn-assessment-primary">Retake quiz</button>
+              <button type="button" id="quizTryAnotherDomainBtn" class="btn-assessment-secondary">Try another domain</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="tabJobs" class="card tab-panel hidden">
+      <h3>Recommended Jobs</h3>
+      <p class="muted">Each recommendation includes skill gaps and direct learning links.</p>
+      <div class="match-filter-wrap">
+        <div class="match-filter-grid">
+          <input id="filterKeyword" placeholder="Role / keyword (e.g. Backend Developer)">
+          <input id="filterCompany" placeholder="Company name">
+          <input id="filterLocation" placeholder="Location">
+          <input id="filterMinSalary" type="number" placeholder="Min salary">
+          <input id="filterMaxSalary" type="number" placeholder="Max salary">
+          <select id="filterRemote">
+            <option value="">Remote/On-site (Any)</option>
+            <option value="true">Remote</option>
+            <option value="false">On-site</option>
+          </select>
+        </div>
+        <div class="match-filter-actions">
+          <button type="button" id="applyMatchFiltersBtn" class="filter-btn">Apply Filters</button>
+          <button type="button" id="clearMatchFiltersBtn" class="filter-btn">Clear Filters</button>
+        </div>
+      </div>
+      <div style="margin-top: 14px;">
+        <b>🔥 Skill Gap & Learning Suggestions</b>
+        <div class="muted" style="margin-top: 4px;">We suggest what to learn based on your job match gaps.</div>
+        <div id="skillSuggestionsMatches" data-skeleton="suggestions" style="margin-top: 12px;"></div>
+      </div>
+      <div id="jobs" data-skeleton="jobs"></div>
+    </section>
+  </main>
+
+  <div id="aiChatWidget" class="ai-chat-widget" aria-live="polite">
+    <button type="button" id="aiChatFab" class="ai-chat-fab" aria-label="Open AI assistant" aria-expanded="false" title="Job Seeker Assistant">
+      <span class="ai-chat-fab-icon" aria-hidden="true">✨</span>
+    </button>
+    <div id="aiChatPanel" class="ai-chat-panel" role="dialog" aria-label="HireNest assistant chat">
+      <div class="ai-chat-panel-head">
+        <div>
+          <div class="ai-chat-panel-title">Job Seeker Assistant</div>
+          <div class="ai-chat-panel-sub">Answers use your profile, matches, quiz &amp; learning data</div>
+        </div>
+        <button type="button" id="aiChatClose" class="ai-chat-close" aria-label="Close chat">×</button>
+      </div>
+      <div id="aiChatMessages" class="ai-chat-messages"></div>
+      <div id="aiChatQuickPrompts" class="ai-chat-quick-wrap"></div>
+      <form id="aiChatForm" class="ai-chat-form">
+        <input id="aiChatInput" type="text" placeholder="Ask about jobs, skills, or learning…" autocomplete="off" maxlength="2000" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/script.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="/dashboard/job-seeker.js"></script>
+  <script src="/dashboard/ai-chat.js"></script>
+</body>
+</html>
