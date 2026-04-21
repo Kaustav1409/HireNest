@@ -47,17 +47,43 @@ git clone https://github.com/Kaustav1409/HireNest.git
 cd HireNest
 ```
 
-### 3) Configure database and app settings
+### 3) Configure database and app settings (recommended: environment variables)
 
-Update `src/main/resources/application.properties` with your local values.
+This project is already wired to read config from environment variables, so each collaborator can run the app without editing code files.
 
-At minimum, verify:
+By default, the app now starts with an in-memory H2 database (good for quick local run and collaborator onboarding).
 
-- `spring.datasource.url`
-- `spring.datasource.username`
-- `spring.datasource.password`
-- `app.jwt.secret`
-- `google.client.id` / `app.google.client-id` (if using Google login)
+If you want MySQL (recommended for full realistic data behavior), set these variables before running:
+
+- `SPRING_DATASOURCE_URL` (example: `jdbc:mysql://127.0.0.1:3306/hirenest_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`)
+- `SPRING_DATASOURCE_USERNAME` (example: `root`)
+- `SPRING_DATASOURCE_PASSWORD` (your local MySQL password)
+- `SPRING_DATASOURCE_DRIVER_CLASS_NAME` = `com.mysql.cj.jdbc.Driver`
+- `SPRING_JPA_DATABASE_PLATFORM` = `org.hibernate.dialect.MySQLDialect`
+- `APP_JWT_SECRET` (use a long random secret key)
+- `GOOGLE_CLIENT_ID` or `APP_GOOGLE_CLIENT_ID` (optional, only if Google login is used)
+
+PowerShell (Windows):
+
+```powershell
+$env:SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/hirenest_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+$env:SPRING_DATASOURCE_USERNAME="root"
+$env:SPRING_DATASOURCE_PASSWORD="your_password"
+$env:SPRING_DATASOURCE_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver"
+$env:SPRING_JPA_DATABASE_PLATFORM="org.hibernate.dialect.MySQLDialect"
+$env:APP_JWT_SECRET="replace_with_a_long_random_secret_key"
+```
+
+macOS/Linux (bash/zsh):
+
+```bash
+export SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/hirenest_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+export SPRING_DATASOURCE_USERNAME="root"
+export SPRING_DATASOURCE_PASSWORD="your_password"
+export SPRING_DATASOURCE_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver"
+export SPRING_JPA_DATABASE_PLATFORM="org.hibernate.dialect.MySQLDialect"
+export APP_JWT_SECRET="replace_with_a_long_random_secret_key"
+```
 
 ### 4) Run the app
 
@@ -103,10 +129,9 @@ Base routes currently include:
 
 ## Recommended Next Improvements
 
-- Add `.gitignore` to exclude generated artifacts (`target/`) and local uploads
-- Move secrets from `application.properties` to environment variables
 - Add API documentation (OpenAPI/Swagger)
 - Add tests for key services and authentication flows
+- Add CI checks (build + tests) on pull requests
 
 ## License
 

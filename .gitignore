@@ -1,0 +1,18 @@
+# Maven build output
+target/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Runtime-generated local files
+uploads/resumes/*
+!uploads/resumes/.gitkeep
+
+# Logs
+*.log
