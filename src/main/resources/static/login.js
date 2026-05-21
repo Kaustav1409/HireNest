@@ -2,8 +2,10 @@ function clearCredentialCache() {
   [
     "hirenest_email",
     "hirenest_password",
+    "hirenest_remember_email",
     "savedEmail",
     "savedPassword",
+    "rememberEmail",
     "rememberPassword"
   ].forEach((k) => {
     try {
@@ -22,7 +24,6 @@ const loginForm = document.getElementById("loginForm");
 const msg = document.getElementById("loginMsg");
 const emailEl = document.getElementById("email");
 const passwordEl = document.getElementById("password");
-const rememberEl = document.getElementById("rememberMe");
 const toggleLoginPassword = document.getElementById("toggleLoginPassword");
 const googleLoginButton = document.getElementById("googleLoginButton");
 const googleClientId = String(document.body?.dataset?.googleClientId || "").trim();
@@ -128,10 +129,8 @@ if (loginParams.get("error") === "tab_switch_detected") {
   }
 }
 
-const rememberedEmail = localStorage.getItem("hirenest_remember_email");
-if (rememberedEmail) {
-  emailEl.value = rememberedEmail;
-  rememberEl.checked = true;
+if (emailEl) {
+  emailEl.value = "";
 }
 
 toggleLoginPassword?.addEventListener("click", () => {
@@ -160,11 +159,6 @@ loginForm.addEventListener("submit", async (e) => {
     return;
   }
   const user = await r.json();
-  if (rememberEl.checked) {
-    localStorage.setItem("hirenest_remember_email", body.email);
-  } else {
-    localStorage.removeItem("hirenest_remember_email");
-  }
   saveAuthAndRedirect(user);
 });
 

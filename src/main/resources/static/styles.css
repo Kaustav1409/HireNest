@@ -2084,8 +2084,155 @@ ul {
   transform-style: preserve-3d;
 }
 
+.ta-homepage {
+  scroll-padding-top: 88px;
+}
+
+#features,
+#how-it-works,
+#benefits {
+  scroll-margin-top: 88px;
+}
+
 .ta-section {
   margin-top: 36px;
+}
+
+.ta-landing-section {
+  min-height: min(88vh, 920px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ta-landing-panel {
+  border-radius: 24px;
+  outline: none;
+  background: rgba(6, 18, 44, 0.42);
+  border: 1px solid rgba(147, 197, 253, 0.28);
+  padding: 36px clamp(20px, 3vw, 32px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 36px rgba(8, 24, 56, 0.32);
+}
+
+.ta-landing-panel:focus-visible {
+  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.55), 0 12px 36px rgba(8, 24, 56, 0.32);
+}
+
+.ta-landing-section .section-head {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 32px;
+  width: 100%;
+}
+
+.ta-landing-section .section-head h2 {
+  font-size: clamp(28px, 4vw, 34px);
+  line-height: 1.15;
+  margin: 0 0 10px;
+  color: #f8fbff;
+}
+
+.ta-landing-section .section-head .muted {
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.ta-section-eyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.95);
+}
+
+.section-head-light .muted {
+  color: rgba(219, 234, 254, 0.82);
+}
+
+.ta-landing-section .ta-features,
+.ta-landing-section .ta-steps-detailed,
+.ta-landing-section .ta-benefit-list {
+  width: 100%;
+  margin: 0;
+}
+
+.ta-nav-section-link.is-active {
+  background: rgba(125, 211, 252, 0.22);
+  border-color: rgba(125, 211, 252, 0.65);
+  color: #f8fbff;
+}
+
+.ta-steps-detailed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.ta-step-detail {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  height: 100%;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(147, 197, 253, 0.32);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 22px rgba(8, 24, 56, 0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.ta-step-detail:hover {
+  transform: translateY(-3px);
+  border-color: rgba(125, 211, 252, 0.55);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.22), 0 12px 28px rgba(15, 23, 42, 0.28);
+}
+
+.ta-step-detail h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #0b1737;
+}
+
+.ta-step-detail p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.55;
+}
+
+.ta-step-num {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(130deg, #3b82f6, #22d3ee);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ta-benefit-points {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #475569;
+}
+
+.ta-benefit-points li {
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.ta-benefit-points li:last-child {
+  margin-bottom: 0;
 }
 
 .ta-hero {
@@ -2131,7 +2278,7 @@ ul {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
-  margin: 30px 0 40px;
+  align-items: stretch;
 }
 
 .ta-feature-card {
@@ -2143,6 +2290,7 @@ ul {
   box-shadow: 0 10px 24px rgba(8, 24, 56, 0.24);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   transform-style: preserve-3d;
+  height: 100%;
 }
 
 .ta-feature-card:nth-child(1) { transition-delay: 0.05s; }
@@ -2166,15 +2314,13 @@ ul {
   margin: 0;
 }
 
-.ta-how {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(147, 197, 253, 0.24);
-  border-radius: 22px;
-  padding: 28px 24px;
-  backdrop-filter: blur(8px);
+.ta-benefit-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
 }
 
-.ta-benefits h2,
 .ta-cta h2 {
   text-align: center;
   color: #f5faff;
@@ -2182,17 +2328,13 @@ ul {
   margin: 0 0 16px;
 }
 
-.ta-benefit-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
 .ta-benefit-card {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(147, 197, 253, 0.25);
-  border-radius: 18px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(147, 197, 253, 0.32);
+  border-radius: 22px;
+  padding: 22px 20px;
+  box-shadow: 0 8px 22px rgba(8, 24, 56, 0.2);
+  height: 100%;
 }
 
 .ta-benefit-card h3 {
@@ -2260,13 +2402,6 @@ ul {
   }
 }
 
-.ta-how h2 {
-  text-align: center;
-  color: #0b1737;
-  font-size: 34px;
-  margin: 0 0 18px;
-}
-
 .ta-steps {
   display: flex;
   justify-content: space-between;
@@ -2319,16 +2454,25 @@ ul {
     font-size: 21px;
   }
 
-  .ta-features {
-    grid-template-columns: 1fr;
-  }
-
+  .ta-features,
+  .ta-steps-detailed,
   .ta-benefit-list {
     grid-template-columns: 1fr;
   }
 
-  .ta-nav-actions .ta-glass-btn:nth-child(-n+2) {
-    display: none;
+  .ta-nav-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 62%;
+  }
+
+  .ta-nav-actions .ta-glass-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .ta-landing-section {
+    min-height: auto;
   }
 }
 
@@ -2415,6 +2559,10 @@ ul {
   justify-content: space-between;
   gap: 10px;
   margin-top: 10px;
+}
+
+.auth-row-end {
+  justify-content: flex-end;
   margin-bottom: 10px;
   flex-wrap: wrap;
 }
