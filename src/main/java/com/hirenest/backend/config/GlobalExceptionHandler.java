@@ -1,4 +1,4 @@
-package com.hirenest.backend.controller;
+package com.hirenest.backend.config;
 
 import com.hirenest.backend.exception.BadRequestException;
 import com.hirenest.backend.exception.NotFoundException;
