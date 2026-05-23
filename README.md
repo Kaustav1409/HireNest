@@ -158,7 +158,7 @@ Built as a **Design Thinking and Methodology** group project—focused on skill-
 
 ## Contributors
 
-**Kaustav Ghosh** — [GitHub @Kaustav1409](https://github.com/Kaustav1409)
+**[@Kaustav1409](https://github.com/Kaustav1409)** — sole contributor
 
 ---
 
