@@ -1,7 +1,4 @@
 {
   "name": "hirenest",
-  "private": true,
-  "scripts": {
-    "vercel-build": "node scripts/generate-vercel-json.js"
-  }
+  "private": true
 }
