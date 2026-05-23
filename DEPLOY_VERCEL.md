@@ -37,14 +37,15 @@ Follow these steps to deploy your Java backend on [Render](https://render.com):
 
 ## Step 3: Configure Vercel to host the Frontend
 
-Now we will configure Vercel to host your static frontend:
+Now we will configure Vercel to host your static frontend. You have two options to deploy the static folder:
 
-1. **Create a `vercel.json` file**:
-   We have created a template file for you at `src/main/resources/static/vercel.json`. 
-2. **Update the Render URL**:
-   Open `src/main/resources/static/vercel.json` and replace `https://your-backend-render-url.onrender.com` with the actual URL of your deployed Render backend:
+### Option A: Zero-Config Root Deployment (Recommended)
+We have added a `vercel.json` file at the **root** of the repository. This file automatically redirects root requests to your static resources folder and proxies API calls, meaning you don't have to change anything in the Vercel dashboard!
+
+1. Open `vercel.json` at the **root** of the project and replace the backend Render URL placeholder with your actual deployed Render URL:
    ```json
    {
+     "cleanUrls": true,
      "rewrites": [
        {
          "source": "/api/:path*",
@@ -53,22 +54,40 @@ Now we will configure Vercel to host your static frontend:
        {
          "source": "/uploads/:path*",
          "destination": "https://your-backend-render-url.onrender.com/uploads/:path*"
+       },
+       {
+         "source": "/(.*)",
+         "destination": "/src/main/resources/static/$1"
        }
      ]
    }
    ```
-3. **Configure Project Settings in Vercel**:
+
+---
+
+### Option B: Custom Root Directory Setting
+If you prefer to keep the default Vercel routing but scope Vercel directly to your static folder:
+
+1. **Update the Render URL**:
+   Open `src/main/resources/static/vercel.json` and replace `https://your-backend-render-url.onrender.com` with the actual URL of your deployed Render backend.
+2. **Configure Project Settings in Vercel**:
    - Go to your Vercel Dashboard and click on the `hirenest` project.
    - Go to **Settings** → **General**.
    - Find the **Root Directory** setting. Change it from the root `.` to:
      `src/main/resources/static`
    - Click **Save**.
-4. **Push the changes to GitHub**:
-   Run the following commands in your terminal to commit and push the newly added files to GitHub:
-   ```powershell
-   git add src/main/resources/static/vercel.json DEPLOY_VERCEL.md
-   git commit -m "Add Vercel config for frontend API proxying and deployment guide"
-   git push origin main
-   ```
 
-Vercel will automatically detect the new commit, build the subfolder `src/main/resources/static`, and deploy it. Since the root directory is set to the static folder, `index.html` will load successfully as the homepage, and all `/api` requests will be proxied to your Render backend!
+---
+
+## Step 4: Push the changes to GitHub
+
+Run the following commands in your terminal to commit and push the newly added files to GitHub:
+
+```powershell
+git add vercel.json src/main/resources/static/vercel.json DEPLOY_VERCEL.md
+git commit -m "Fix Vercel deployment 404 by adding root-level vercel.json routing and updating guides"
+git push origin main
+```
+
+Vercel will automatically detect the new commit, process the root-level `vercel.json` rewrite, and deploy your site successfully. Your homepage will load directly, and all `/api` requests will be proxied to your Render backend!
+
