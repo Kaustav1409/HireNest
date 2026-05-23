@@ -1,8 +1,8 @@
--- Widen job text columns (H2 / MySQL-style). Run if job posts fail with "Value too long for column DESCRIPTION".
--- H2 file DB default path: ./data/hirenest_db
+-- Widen job text columns (H2 / MySQL-style). Safe to run on every startup.
+-- H2 file DB path in Docker: /app/data/hirenest_db
 
-ALTER TABLE job ALTER COLUMN description SET DATA TYPE CLOB;
-ALTER TABLE job ALTER COLUMN required_skills SET DATA TYPE VARCHAR(2000);
-ALTER TABLE job ALTER COLUMN title SET DATA TYPE VARCHAR(512);
-ALTER TABLE job ALTER COLUMN company_name SET DATA TYPE VARCHAR(512);
-ALTER TABLE job ALTER COLUMN location SET DATA TYPE VARCHAR(512);
+ALTER TABLE IF EXISTS job ALTER COLUMN IF EXISTS description SET DATA TYPE CLOB;
+ALTER TABLE IF EXISTS job ALTER COLUMN IF EXISTS required_skills SET DATA TYPE VARCHAR(2000);
+ALTER TABLE IF EXISTS job ALTER COLUMN IF EXISTS title SET DATA TYPE VARCHAR(512);
+ALTER TABLE IF EXISTS job ALTER COLUMN IF EXISTS company_name SET DATA TYPE VARCHAR(512);
+ALTER TABLE IF EXISTS job ALTER COLUMN IF EXISTS location SET DATA TYPE VARCHAR(512);
