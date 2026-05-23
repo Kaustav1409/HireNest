@@ -38,15 +38,12 @@ function isPlainNotFoundResponse(response, text) {
 }
 
 function formatAuthApiError(response, text, fallback) {
-  if (window.HIRENEST_BACKEND_NOT_CONFIGURED) {
-    return "Vercel par HIRENEST_BACKEND_URL set karo (Render URL), phir Redeploy. VERCEL.md dekho.";
-  }
   if (isPlainNotFoundResponse(response, text)) {
     const base = apiBase();
     if (base) {
       return `Cannot reach API at ${base}. Render backend check karo.`;
     }
-    return "API nahi mili. Vercel → HIRENEST_BACKEND_URL set karo (VERCEL.md).";
+    return "API not found. Please verify backend is running.";
   }
   if (text && text.trim()) return text.trim();
   return fallback;
@@ -130,9 +127,7 @@ async function apiFetch(url, options = {}) {
     if (isPublicAuth) {
       const base = apiBase();
       let msg = "Cannot connect to HireNest API.";
-      if (window.HIRENEST_BACKEND_NOT_CONFIGURED) {
-        msg = "Vercel par HIRENEST_BACKEND_URL set karo (VERCEL.md).";
-      } else if (base) {
+      if (base) {
         msg = `Cannot connect to ${base}. Check Render is running and CORS is enabled (redeploy backend).`;
       }
       const err2 = new Error(msg);
