@@ -1,0 +1,24 @@
+# Deploy backend on Render: https://dashboard.render.com → New → Blueprint
+# Then set HIRENEST_BACKEND_URL on Vercel to the service URL (no trailing slash).
+
+services:
+  - type: web
+    name: hirenest-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: "9090"
+      - key: APP_JWT_SECRET
+        generateValue: true
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:h2:file:/var/data/hirenest_db;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
+      - key: SPRING_DATASOURCE_USERNAME
+        value: sa
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: ""
+    disk:
+      name: hirenest-data
+      mountPath: /var/data
+      sizeGB: 1

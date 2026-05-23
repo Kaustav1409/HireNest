@@ -34,6 +34,7 @@ function showRegisterMsg(text, isError = true) {
 
 async function readErrorMessage(response) {
   const clone = response.clone();
+  let text = "";
   try {
     const payload = await response.json();
     if (payload && typeof payload.message === "string" && payload.message.trim()) {
@@ -43,12 +44,11 @@ async function readErrorMessage(response) {
     // Fallback to default message if response is not JSON.
   }
   try {
-    const text = (await clone.text()).trim();
-    if (text) return text;
+    text = (await clone.text()).trim();
   } catch (_) {
     // ignore text parse errors
   }
-  return "Registration failed. Please check your details and try again.";
+  return formatAuthApiError(response, text, "Registration failed. Please check your details and try again.");
 }
 
 function redirectByRole(user) {
@@ -151,18 +151,30 @@ registerForm.addEventListener("submit", async (e) => {
     showRegisterMsg("Invalid role selected.");
     return;
   }
-  const r = await apiFetch("/api/auth/register", {
-    method: "POST",
-    body: JSON.stringify(body)
-  });
+  let r;
+  try {
+    r = await apiFetch("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  } catch (err) {
+    showRegisterMsg(err?.message || "Registration request failed.");
+    return;
+  }
   if (!r.ok) {
     showRegisterMsg(await readErrorMessage(r));
     return;
   }
-  const loginRes = await apiFetch("/api/auth/login", {
+  let loginRes;
+  try {
+    loginRes = await apiFetch("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email: body.email, password: body.password })
-  });
+    });
+  } catch (err) {
+    showRegisterMsg(err?.message || "Login after register failed.");
+    return;
+  }
   if (!loginRes.ok) {
     showRegisterMsg("Registered. Please login to continue onboarding.", false);
     setTimeout(() => (location.href = "/login.html"), 900);

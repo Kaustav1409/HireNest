@@ -6,6 +6,19 @@ const PUBLIC_AUTH_ENDPOINTS = new Set([
   "/api/auth/google"
 ]);
 
+function apiBase() {
+  const base = typeof window.HIRENEST_API_BASE === "string" ? window.HIRENEST_API_BASE : "";
+  return base.replace(/\/$/, "");
+}
+
+function resolveApiUrl(url) {
+  const path = String(url || "");
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = apiBase();
+  if (!base) return path;
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 function normalizePath(url) {
   try {
     return new URL(url, window.location.origin).pathname;
@@ -16,6 +29,27 @@ function normalizePath(url) {
 
 function isPublicAuthEndpoint(url) {
   return PUBLIC_AUTH_ENDPOINTS.has(normalizePath(url));
+}
+
+function isPlainNotFoundResponse(response, text) {
+  if (!response || response.status !== 404) return false;
+  const body = String(text || "").trim();
+  return !body || /^not\s*found$/i.test(body) || body.includes("NOT_FOUND");
+}
+
+function formatAuthApiError(response, text, fallback) {
+  if (window.HIRENEST_BACKEND_NOT_CONFIGURED) {
+    return "Vercel par HIRENEST_BACKEND_URL set karo (Render URL), phir Redeploy. VERCEL.md dekho.";
+  }
+  if (isPlainNotFoundResponse(response, text)) {
+    const base = apiBase();
+    if (base) {
+      return `Cannot reach API at ${base}. Render backend check karo.`;
+    }
+    return "API nahi mili. Vercel → HIRENEST_BACKEND_URL set karo (VERCEL.md).";
+  }
+  if (text && text.trim()) return text.trim();
+  return fallback;
 }
 
 function clearHirenestAuth() {
@@ -80,15 +114,33 @@ function authHeaders(includeJson = true, includeAuth = true) {
 }
 
 async function apiFetch(url, options = {}) {
+  const resolvedUrl = resolveApiUrl(url);
   const isFormData = options.body instanceof FormData;
   const method = String(options.method || "GET").toUpperCase();
   const isPublicAuth = isPublicAuthEndpoint(url);
   // Do not send Content-Type: application/json on GET/HEAD (breaks some PDF/binary responses and proxies).
   const includeJsonContentType = !isFormData && method !== "GET" && method !== "HEAD";
-  const response = await fetch(url, {
+  let response;
+  try {
+    response = await fetch(resolvedUrl, {
     ...options,
     headers: { ...authHeaders(includeJsonContentType, !isPublicAuth), ...(options.headers || {}) }
-  });
+    });
+  } catch (err) {
+    if (isPublicAuth) {
+      const base = apiBase();
+      let msg = "Cannot connect to HireNest API.";
+      if (window.HIRENEST_BACKEND_NOT_CONFIGURED) {
+        msg = "Vercel par HIRENEST_BACKEND_URL set karo (VERCEL.md).";
+      } else if (base) {
+        msg = `Cannot connect to ${base}. Check Render is running and CORS is enabled (redeploy backend).`;
+      }
+      const err2 = new Error(msg);
+      err2.cause = err;
+      throw err2;
+    }
+    throw err;
+  }
   if (response.status === 401 && !isPublicAuth) {
     clearHirenestAuth();
     location.href = "/login.html?reason=session_expired";

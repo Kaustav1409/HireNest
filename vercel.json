@@ -1,17 +1,15 @@
 {
+  "buildCommand": "node scripts/generate-vercel-json.js",
+  "outputDirectory": "src/main/resources/static",
   "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://your-backend-render-url.onrender.com/api/:path*"
+      "destination": "https://REPLACE-WITH-RENDER-URL.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://your-backend-render-url.onrender.com/uploads/:path*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/src/main/resources/static/$1"
+      "destination": "https://REPLACE-WITH-RENDER-URL.onrender.com/uploads/:path*"
     }
   ]
 }

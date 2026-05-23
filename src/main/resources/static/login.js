@@ -36,6 +36,7 @@ function showMsg(text, isError = true) {
 
 async function readErrorMessage(response, fallbackMessage) {
   const clone = response.clone();
+  let text = "";
   try {
     const payload = await response.json();
     if (payload && typeof payload.message === "string" && payload.message.trim()) {
@@ -45,12 +46,11 @@ async function readErrorMessage(response, fallbackMessage) {
     // Keep fallback message when backend response is not JSON.
   }
   try {
-    const text = (await clone.text()).trim();
-    if (text) return text;
+    text = (await clone.text()).trim();
   } catch (_) {
     // ignore text parse errors
   }
-  return fallbackMessage;
+  return formatAuthApiError(response, text, fallbackMessage);
 }
 
 function saveAuthAndRedirect(user) {
@@ -157,10 +157,16 @@ loginForm.addEventListener("submit", async (e) => {
     showMsg("Email and password are required.");
     return;
   }
-  const r = await apiFetch("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify(body)
-  });
+  let r;
+  try {
+    r = await apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+  } catch (err) {
+    showMsg(err?.message || "Login request failed.");
+    return;
+  }
   if (!r.ok) {
     showMsg(await readErrorMessage(r, "Invalid email or password"));
     return;
