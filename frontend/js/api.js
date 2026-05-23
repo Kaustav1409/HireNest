@@ -41,9 +41,9 @@ function formatAuthApiError(response, text, fallback) {
   if (isPlainNotFoundResponse(response, text)) {
     const base = apiBase();
     if (base) {
-      return `Cannot reach API at ${base}. Render backend check karo.`;
+      return `Cannot reach API at ${base}. Check if backend is running.`;
     }
-    return "API not found. Please verify backend is running.";
+    return "Cannot reach API. Please try again later.";
   }
   if (text && text.trim()) return text.trim();
   return fallback;
@@ -128,7 +128,7 @@ async function apiFetch(url, options = {}) {
       const base = apiBase();
       let msg = "Cannot connect to HireNest API.";
       if (base) {
-        msg = `Cannot connect to ${base}. Check Render is running and CORS is enabled (redeploy backend).`;
+        msg = `Cannot connect to ${base}. Backend may be starting up — please wait 30s and retry.`;
       }
       const err2 = new Error(msg);
       err2.cause = err;
