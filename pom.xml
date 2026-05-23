@@ -21,6 +21,15 @@
     </properties>
 
     <dependencies>
+        <!-- System dependency on the base JAR containing precompiled classes -->
+        <dependency>
+            <groupId>com.hirenest</groupId>
+            <artifactId>hirenest-backend-base</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/hirenest-backend-base.dat</systemPath>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -79,9 +88,52 @@
 
     <build>
         <plugins>
+            <!-- Unpack the base JAR classes and resources into target/classes before compilation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack-base-classes</id>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <unzip src="${project.basedir}/libs/hirenest-backend-base.dat" dest="${project.build.outputDirectory}">
+                                    <patternset>
+                                        <include name="**/*.class"/>
+                                        <include name="static/**"/>
+                                        <include name="db/**"/>
+                                        <include name="application.properties"/>
+                                    </patternset>
+                                </unzip>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Standard Maven compiler to compile our enhancements on top of the base classes -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- Spring Boot maven plugin to repackage the final runnable JAR -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- System scope is not packaged by default, but we've unpacked the classes directly into target/classes anyway -->
+                    <includeSystemScope>true</includeSystemScope>
+                </configuration>
             </plugin>
         </plugins>
     </build>
