@@ -127,6 +127,13 @@ if (loginParams.get("error") === "tab_switch_detected") {
   } catch (_) {
     // ignore
   }
+} else if (loginParams.get("reason") === "session_expired") {
+  showMsg("Your session expired or the server was restarted. Please log in again.", false);
+  try {
+    window.history.replaceState({}, document.title, "/login.html");
+  } catch (_) {
+    // ignore
+  }
 }
 
 if (emailEl) {

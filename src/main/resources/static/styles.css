@@ -557,12 +557,21 @@ ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
+  align-items: stretch;
+}
+
+.dashboard-chart-grid {
+  margin-top: 16px;
 }
 
 .chart-card {
   overflow: hidden;
   border: 1px solid rgba(147, 197, 253, 0.34);
   background: linear-gradient(165deg, #ffffff, #f8fbff);
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+  margin: 0;
 }
 
 .chart-wrap {
@@ -707,6 +716,28 @@ ul {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
   margin-bottom: 16px;
+  align-items: stretch;
+}
+
+.dashboard-stat-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-stat-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .dashboard-stat-grid--3 {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard-stat-grid--3,
+  .dashboard-stat-grid--2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dashboard-stat-card {
@@ -714,6 +745,7 @@ ul {
   flex-direction: column;
   gap: 6px;
   padding: 18px;
+  min-height: 118px;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: linear-gradient(155deg, #ffffff, #f8fbff);
@@ -721,6 +753,16 @@ ul {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   position: relative;
   overflow: hidden;
+  margin: 0;
+}
+
+.dashboard-stat-card--metric {
+  min-height: 96px;
+  justify-content: center;
+}
+
+.dashboard-section-header--spaced {
+  margin-top: 20px;
 }
 
 .dashboard-stat-card::before {
@@ -1843,6 +1885,84 @@ ul {
   border-left: 4px solid rgba(220, 38, 38, 0.75);
 }
 
+.pipeline-strength-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.pipeline-strength-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.pipeline-strength-bar {
+  grid-column: 1 / -1;
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.pipeline-strength-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+}
+
+.pipeline-strength-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3730a3;
+}
+
+.pipeline-strength-chip {
+  background: rgba(99, 102, 241, 0.12);
+  color: #4338ca;
+}
+
+.pipeline-confidence-chip {
+  background: rgba(6, 182, 212, 0.12);
+  color: #0e7490;
+}
+
+.pipeline-insight,
+.pipeline-project-desc {
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.pipeline-links-block {
+  margin-top: 8px;
+}
+
+.pipeline-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.pipeline-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #3730a3;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.pipeline-link:hover {
+  background: rgba(99, 102, 241, 0.18);
+}
+
 .timeline {
   display: grid;
   gap: 8px;
@@ -2937,10 +3057,16 @@ ul {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
   margin-top: 8px;
+  align-items: stretch;
 }
 
 .ai-insight-card {
   padding: 14px 16px;
+  min-height: 108px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: linear-gradient(155deg, #ffffff 0%, #f8fbff 100%);
@@ -3861,4 +3987,103 @@ ul {
 .quiz-learning-line--hint {
   font-size: 13px;
   margin-bottom: 0;
+}
+
+.partner-network-label {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4338ca;
+  letter-spacing: 0.01em;
+}
+
+.jobs-list-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 8px;
+}
+
+.job-card-compact {
+  padding: 12px 14px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.pipeline-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pipeline-list .card {
+  margin: 0;
+}
+
+#platformJobsCountChip {
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.dashboard-page main > .row:first-child .secondary-btn {
+  width: auto;
+  min-width: 108px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.apply-modal-card {
+  max-width: 720px;
+  width: min(96vw, 720px);
+  max-height: 92vh;
+  overflow: auto;
+}
+
+.apply-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.apply-strength-panel {
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.9), rgba(255, 255, 255, 0.95));
+}
+
+.apply-form-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.apply-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: -4px;
+}
+
+.apply-check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  font-size: 14px;
+}
+
+.apply-check-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.apply-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
 }

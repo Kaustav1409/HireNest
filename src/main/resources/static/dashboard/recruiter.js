@@ -34,6 +34,40 @@ async function ensureRecruiterProfile() {
   return null;
 }
 
+async function loadRecruiterProfileForm() {
+  const recruiterUserId = getRecruiterUserId();
+  if (!recruiterUserId) return;
+
+  try {
+    const res = await apiFetch("/api/profile/recruiter");
+    const { body, rawText } = await parseApiResponse(res);
+    if (!res.ok) {
+      if (res.status === 404) return;
+      const msg = apiFailureMessage(res, body, rawText, "Could not load recruiter profile");
+      if (isSessionStaleMessage(msg)) {
+        redirectToLoginForStaleSession();
+        return;
+      }
+      console.warn("Recruiter profile load failed", res.status, body ?? rawText);
+      return;
+    }
+    if (!body || typeof body !== "object") return;
+
+    if (body.id != null) {
+      localStorage.setItem("hirenest_recruiterId", String(body.id));
+    }
+
+    const nameEl = document.getElementById("companyName");
+    const descEl = document.getElementById("companyDescription");
+    if (nameEl) nameEl.value = body.companyName != null ? String(body.companyName) : "";
+    if (descEl) descEl.value = body.companyDescription != null ? String(body.companyDescription) : "";
+    syncCompanyDescriptionWordLimitUi();
+  } catch (err) {
+    if (err?.message === "Session expired" || err?.message === "Unauthorized") return;
+    console.error("loadRecruiterProfileForm", err);
+  }
+}
+
 let jobPerformanceChart = null;
 let candidateSkillDoughnutChart = null;
 let hiringFunnelChart = null;
@@ -75,6 +109,34 @@ function flattenCandidatesByJob(byJob) {
     (list || []).forEach((c) => rows.push({ ...c, jobId }));
   });
   return rows;
+}
+
+function renderRecruiterJobCard(j, compact) {
+  const title = escapeHtml(j.title || "Job");
+  const company = escapeHtml(j.companyName || "Company");
+  const skills = escapeHtml(j.requiredSkills || "");
+  const partner = j.platformJob === true || j.platformJob === "true";
+  const postedBy = escapeHtml(
+    normalizeDisplayText(j.postedByLabel || (partner ? "Posted by HireNest Partner Network" : company))
+  );
+  const loc = escapeHtml(j.location || "Location");
+  const exp = escapeHtml(j.experienceLevel || "");
+  if (compact) {
+    return `<div class="card job-card-compact">
+      <b>${title}</b>
+      <div class="muted small">${company}</div>
+      <div class="partner-network-label">${postedBy}</div>
+      <div class="muted small">${loc}${exp ? ` · ${exp}` : ""}</div>
+      <div class="muted small">${skills}</div>
+    </div>`;
+  }
+  return `<div class="card job-card-compact">
+      <b>${title}</b>
+      <div class="muted small">${company}</div>
+      <div class="partner-network-label">${postedBy}</div>
+      <div class="muted small">${loc}${exp ? ` · ${exp}` : ""}</div>
+      <div class="muted small">${skills}</div>
+    </div>`;
 }
 
 function prettifySkillLabel(raw) {
@@ -201,6 +263,74 @@ function applicationTimelineHtml(a) {
         <span class="dot"></span>
         <div><b>Rejected</b><div class="muted small">${rej}</div></div>
       </div>
+    </div>
+  `;
+}
+
+function formatPercent(value) {
+  if (value == null || Number.isNaN(Number(value))) return null;
+  return `${Math.round(Number(value))}%`;
+}
+
+function truncateText(text, maxLen) {
+  const t = normalizeDisplayText(text || "").trim();
+  if (!t) return "";
+  if (t.length <= maxLen) return t;
+  return `${t.slice(0, maxLen - 1)}…`;
+}
+
+/** Strength + project links for pipeline cards (enhanced apply data). */
+function pipelineStrengthHtml(a) {
+  const strength = formatPercent(a.applicationStrengthPercent);
+  const confidence = formatPercent(a.hiringConfidencePercent);
+  const insights = truncateText(a.strengthInsights, 140);
+  if (!strength && !confidence && !insights) return "";
+  const bars = strength
+    ? `<div class="pipeline-strength-row">
+        <span class="muted small">Application strength</span>
+        <div class="pipeline-strength-bar"><div class="pipeline-strength-fill" style="width:${Math.min(100, Math.round(a.applicationStrengthPercent))}%"></div></div>
+        <span class="pipeline-strength-pct">${strength}</span>
+      </div>`
+    : "";
+  const confChip = confidence
+    ? `<span class="meta-chip pipeline-confidence-chip">Confidence ${confidence}</span>`
+    : "";
+  const insightLine = insights
+    ? `<p class="muted small pipeline-insight">${escapeHtml(insights)}</p>`
+    : "";
+  return `<div class="pipeline-strength-block">${bars}${confChip ? `<div class="job-meta-row">${confChip}</div>` : ""}${insightLine}</div>`;
+}
+
+function pipelineProjectLinksHtml(a) {
+  const links = [];
+  if (a.githubLink && String(a.githubLink).trim()) {
+    links.push({ label: "GitHub", url: a.githubLink });
+  }
+  if (a.portfolioLink && String(a.portfolioLink).trim()) {
+    links.push({ label: "Portfolio", url: a.portfolioLink });
+  }
+  if (a.driveLink && String(a.driveLink).trim()) {
+    links.push({ label: "Drive", url: a.driveLink });
+  }
+  const desc = truncateText(a.projectDescription, 120);
+  const fileChip = a.projectFileOnFile
+    ? `<span class="meta-chip">Project file uploaded</span>`
+    : "";
+  const resumeChip = a.resumeOnFile
+    ? `<span class="meta-chip remote">Resume on file</span>`
+    : `<span class="meta-chip onsite">No resume file</span>`;
+  if (!links.length && !desc && !fileChip && !a.resumeOnFile) return "";
+  const linkHtml = links
+    .map(
+      (l) =>
+        `<a class="pipeline-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.label)}</a>`
+    )
+    .join("");
+  return `
+    <div class="pipeline-links-block">
+      <div class="job-meta-row">${resumeChip}${fileChip}</div>
+      ${linkHtml ? `<div class="pipeline-link-row">${linkHtml}</div>` : ""}
+      ${desc ? `<p class="muted small pipeline-project-desc">${escapeHtml(desc)}</p>` : ""}
     </div>
   `;
 }
@@ -566,7 +696,46 @@ function pickApiErrorMessage(body) {
   return null;
 }
 
+function getRecruiterUserId() {
+  const id = Number(userId);
+  if (!userId || !Number.isFinite(id) || id <= 0) return null;
+  return id;
+}
+
+async function parseApiResponse(res) {
+  const rawText = await res.text();
+  let body = null;
+  try {
+    body = rawText ? JSON.parse(rawText) : null;
+  } catch (_) {
+    body = null;
+  }
+  return { body, rawText };
+}
+
+function apiFailureMessage(res, body, rawText, fallback) {
+  let msg = pickApiErrorMessage(body);
+  if (!msg && rawText && rawText.trim()) {
+    const t = rawText.trim();
+    msg = t.length <= 900 ? t : `${t.slice(0, 900)}…`;
+  }
+  return msg || fallback || `Request failed (${res.status})`;
+}
+
+function isSessionStaleMessage(msg) {
+  return typeof msg === "string" && /user not found/i.test(msg.trim());
+}
+
+function redirectToLoginForStaleSession() {
+  if (typeof clearHirenestAuth === "function") clearHirenestAuth();
+  showToast("Session expired. Please log in again.", "error");
+  setTimeout(() => {
+    location.href = "/login.html?reason=session_expired";
+  }, 900);
+}
+
 const COMPANY_DESCRIPTION_MAX_WORDS = 5000;
+const JOB_DESCRIPTION_MAX_CHARS = 10000;
 
 function countWords(text) {
   const t = String(text ?? "").trim();
@@ -622,37 +791,37 @@ document.getElementById("recruiterProfileForm").addEventListener("submit", async
     submitBtn.textContent = "Saving...";
   }
   try {
+    const recruiterUserId = getRecruiterUserId();
+    if (!recruiterUserId) {
+      redirectToLoginForStaleSession();
+      return;
+    }
     const res = await apiFetch("/api/profile/recruiter", {
       method: "POST",
       body: JSON.stringify({
-        userId: Number(userId),
+        userId: recruiterUserId,
         companyName: document.getElementById("companyName").value,
         companyDescription: document.getElementById("companyDescription").value
       })
     });
-    const rawText = await res.text();
-    let body = null;
-    try {
-      body = rawText ? JSON.parse(rawText) : null;
-    } catch (_) {
-      body = null;
-    }
+    const { body, rawText } = await parseApiResponse(res);
     if (!res.ok) {
-      let msg = pickApiErrorMessage(body);
-      if (!msg && rawText && rawText.trim()) {
-        const t = rawText.trim();
-        msg = t.length <= 900 ? t : `${t.slice(0, 900)}…`;
-      }
+      const msg = apiFailureMessage(res, body, rawText, "Failed to save recruiter profile");
       console.error("Recruiter profile save failed", res.status, body ?? rawText);
-      showToast(msg || "Failed to save recruiter profile", "error");
+      if (isSessionStaleMessage(msg)) {
+        redirectToLoginForStaleSession();
+        return;
+      }
+      showToast(msg, "error");
       return;
     }
-    if (body && body.user && body.user.id != null) {
-      localStorage.setItem("hirenest_recruiterId", String(body.user.id));
+    if (body && body.id != null) {
+      localStorage.setItem("hirenest_recruiterId", String(body.id));
     }
     showToast("Recruiter profile saved successfully", "success");
     await loadRecruiterData();
   } catch (err) {
+    if (err?.message === "Session expired" || err?.message === "Unauthorized") return;
     console.error(err);
     showToast("Failed to save recruiter profile", "error");
   } finally {
@@ -665,23 +834,87 @@ document.getElementById("recruiterProfileForm").addEventListener("submit", async
 
 document.getElementById("jobForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  await apiFetch("/api/jobs", {
-    method: "POST",
-    body: JSON.stringify({
-      recruiterId: Number(userId),
-      title: document.getElementById("title").value,
-      description: document.getElementById("description").value,
-      requiredSkills: document.getElementById("requiredSkills").value,
-      location: document.getElementById("location").value,
-      salaryMin: Number(document.getElementById("salaryMin").value || 0),
-      salaryMax: Number(document.getElementById("salaryMax").value || 0)
-    })
-  });
-  showToast("Job posted");
-  await loadRecruiterData();
+  const recruiterUserId = getRecruiterUserId();
+  if (!recruiterUserId) {
+    redirectToLoginForStaleSession();
+    return;
+  }
+  const title = document.getElementById("title")?.value?.trim() || "";
+  const requiredSkills = document.getElementById("requiredSkills")?.value?.trim() || "";
+  const description = document.getElementById("description")?.value?.trim() || "";
+  if (!title) {
+    showToast("Job title is required", "error");
+    return;
+  }
+  if (!requiredSkills) {
+    showToast("Required skills are required", "error");
+    return;
+  }
+  if (description.length > JOB_DESCRIPTION_MAX_CHARS) {
+    showToast(`Description is too long (max ${JOB_DESCRIPTION_MAX_CHARS} characters)`, "error");
+    return;
+  }
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn ? submitBtn.textContent : "";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Posting...";
+  }
+  try {
+    const companyName = document.getElementById("companyName")?.value?.trim() || "";
+    const res = await apiFetch("/api/jobs", {
+      method: "POST",
+      body: JSON.stringify({
+        recruiterId: recruiterUserId,
+        companyName: companyName || undefined,
+        title,
+        description,
+        requiredSkills,
+        location: document.getElementById("location")?.value?.trim() || "",
+        salaryMin: Number(document.getElementById("salaryMin")?.value || 0),
+        salaryMax: Number(document.getElementById("salaryMax")?.value || 0)
+      })
+    });
+    const { body, rawText } = await parseApiResponse(res);
+    if (!res.ok) {
+      let msg = apiFailureMessage(res, body, rawText, "Failed to post job");
+      if (/too long|value too long|description/i.test(msg || "")) {
+        msg = "Job description is too long. Shorten it and try again (max 10,000 characters).";
+      }
+      console.error("Job post failed", res.status, body ?? rawText);
+      if (isSessionStaleMessage(msg)) {
+        redirectToLoginForStaleSession();
+        return;
+      }
+      showToast(msg, "error");
+      return;
+    }
+    showToast("Job posted successfully", "success");
+    e.target.reset();
+    try {
+      await loadRecruiterData();
+    } catch (loadErr) {
+      console.error("Jobs list refresh failed after post", loadErr);
+      showToast("Job saved, but the list could not refresh. Reload the page.", "error");
+    }
+  } catch (err) {
+    if (err?.message === "Session expired" || err?.message === "Unauthorized") return;
+    console.error(err);
+    showToast("Failed to post job", "error");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText || "Post Job";
+    }
+  }
 });
 
 async function loadRecruiterData() {
+  const recruiterUserId = getRecruiterUserId();
+  if (!recruiterUserId) {
+    redirectToLoginForStaleSession();
+    return;
+  }
   [
     "jobsPostedCount",
     "candidateRowsCount",
@@ -695,15 +928,61 @@ async function loadRecruiterData() {
     "recRejectedHighlight",
     "recActiveOpenings"
   ].forEach(setStatSkeleton);
-  setLoading("jobs", "Fetching jobs...");
+  setLoading("jobs", "Fetching your posted jobs...");
+  setLoading("platformJobs", "Loading platform partner jobs...");
   setLoading("candidates", "Fetching candidates...");
   setLoading("applicationsPipeline", "Fetching applications...");
-  const jobsRes = await apiFetch(`/api/jobs/recruiter/${userId}`);
-  const jobs = await jobsRes.json();
+  const [jobsRes, platformRes, platformCountRes] = await Promise.all([
+    apiFetch(`/api/jobs/recruiter/${recruiterUserId}`),
+    apiFetch("/api/jobs/platform"),
+    apiFetch("/api/jobs/platform/count")
+  ]);
+  const { body: jobsBody, rawText: jobsRaw } = await parseApiResponse(jobsRes);
+  const { body: platformBody } = await parseApiResponse(platformRes);
+  const { body: platformCountBody } = await parseApiResponse(platformCountRes);
+  if (!jobsRes.ok) {
+    const msg = apiFailureMessage(jobsRes, jobsBody, jobsRaw, "Could not load your jobs");
+    console.error("Load jobs failed", jobsRes.status, jobsBody ?? jobsRaw);
+    if (isSessionStaleMessage(msg)) {
+      redirectToLoginForStaleSession();
+      return;
+    }
+    setEmpty("jobs", msg);
+    showToast(msg, "error");
+    return;
+  }
+  const jobs = Array.isArray(jobsBody) ? jobsBody : [];
+  const platformJobs = platformRes.ok && Array.isArray(platformBody) ? platformBody : [];
+  const platformCount =
+    platformCountBody && platformCountBody.count != null
+      ? platformCountBody.count
+      : platformJobs.length;
+  const platformChip = document.getElementById("platformJobsCountChip");
+  const platformEl = document.getElementById("platformJobs");
+  if (platformChip) {
+    platformChip.textContent = `${platformCount}+ roles · Posted by HireNest Partner Network`;
+  }
+  if (platformEl) {
+    if (!platformJobs.length) {
+      setEmpty("platformJobs", "Platform jobs are loading on first startup. Restart the app from project root if this stays empty.");
+    } else {
+      platformEl.innerHTML = platformJobs
+        .slice(0, 24)
+        .map((j) => renderRecruiterJobCard(j, true))
+        .join("");
+      if (platformJobs.length > 24) {
+        platformEl.insertAdjacentHTML(
+          "beforeend",
+          `<p class="muted small" style="margin-top:10px;">Showing 24 of ${platformJobs.length} partner roles. Job seekers see all roles in Recommended Jobs.</p>`
+        );
+      }
+    }
+  }
   setRecruiterAiInsightsLoading();
-  const insightsRes = await apiFetch(`/api/dashboard/recruiter/${userId}/insights`);
-  const insights = await insightsRes.json();
-  document.getElementById("jobsPostedCount").textContent = jobs.length;
+  const insightsRes = await apiFetch(`/api/dashboard/recruiter/${recruiterUserId}/insights`);
+  const { body: insightsBody } = await parseApiResponse(insightsRes);
+  const insights = insightsRes.ok && insightsBody && typeof insightsBody === "object" ? insightsBody : {};
+  document.getElementById("jobsPostedCount").textContent = jobs.length + platformCount;
   document.getElementById("avgSkillsPerJob").textContent = insights.avgSkillsPerJob || 0;
   document.getElementById("appliedCount").textContent = insights.appliedCount || 0;
   document.getElementById("shortlistedCount").textContent = insights.shortlistedCount || 0;
@@ -713,28 +992,30 @@ async function loadRecruiterData() {
   const elSH = document.getElementById("recShortlistedHighlight");
   const elRJ = document.getElementById("recRejectedHighlight");
   const elAO = document.getElementById("recActiveOpenings");
-  if (elTJ) elTJ.textContent = insights.totalJobs != null ? insights.totalJobs : jobs.length;
+  if (elTJ) elTJ.textContent = insights.totalJobs != null ? insights.totalJobs : jobs.length + platformCount;
   if (elTA) elTA.textContent = insights.totalApplicants != null ? insights.totalApplicants : 0;
   if (elSH) elSH.textContent = insights.shortlistedCandidates != null ? insights.shortlistedCandidates : insights.shortlistedCount || 0;
   if (elRJ) elRJ.textContent = insights.rejectedCount != null ? insights.rejectedCount : 0;
-  if (elAO) elAO.textContent = insights.openPositions != null ? insights.openPositions : jobs.length;
+  if (elAO) elAO.textContent = insights.openPositions != null ? insights.openPositions : jobs.length + platformCount;
   const jobsEl = document.getElementById("jobs");
-  jobsEl.innerHTML = jobs.map((j) => `<div class="card"><b>${j.title}</b><br>${j.requiredSkills}</div>`).join("");
+  jobsEl.innerHTML = jobs.map((j) => renderRecruiterJobCard(j, false)).join("");
   if (!jobs.length) {
-    setEmpty("jobs", "No hiring activity yet. Post your first job to start receiving candidates.");
+    setEmpty("jobs", "No custom recruiter jobs posted yet. Use Post Job to create your own openings.");
   }
 
-  const candRes = await apiFetch(`/api/recruiter/candidates/${userId}${candidatesQueryString()}`);
-  const byJob = await candRes.json();
+  const candRes = await apiFetch(`/api/recruiter/candidates/${recruiterUserId}${candidatesQueryString()}`);
+  const { body: candBody } = await parseApiResponse(candRes);
+  const byJob = candRes.ok && candBody && typeof candBody === "object" ? candBody : {};
   const totalRows = Object.values(byJob).reduce((acc, arr) => acc + arr.length, 0);
   document.getElementById("candidateRowsCount").textContent = totalRows;
   const candidatesEl = document.getElementById("candidates");
   candidatesEl.innerHTML = "";
-  const jobTitleById = new Map(jobs.map((j) => [String(j.id), j.title]));
+  const allJobsForTitles = [...jobs, ...platformJobs];
+  const jobTitleById = new Map(allJobsForTitles.map((j) => [String(j.id), j.title]));
   if (!Object.keys(byJob).length) {
-    const msg = !jobs.length
+    const msg = !jobs.length && !platformJobs.length
       ? "Post a job first to see ranked candidates."
-      : "No candidates match these filters. Try resetting filters.";
+      : "No candidates match these filters yet. Platform jobs are live — candidates appear after applications and assessments.";
     setEmpty("candidates", msg);
   } else {
     Object.keys(byJob).forEach((jobId) => {
@@ -776,8 +1057,9 @@ async function loadRecruiterData() {
     });
   }
 
-  const appsRes = await apiFetch(`/api/recruiter/applications/${userId}`);
-  const applications = await appsRes.json();
+  const appsRes = await apiFetch(`/api/recruiter/applications/${recruiterUserId}`);
+  const { body: appsBody } = await parseApiResponse(appsRes);
+  const applications = appsRes.ok && Array.isArray(appsBody) ? appsBody : [];
 
   // Cache data for charts and filters
   recruiterChartState.jobs = jobs;
@@ -833,8 +1115,8 @@ async function loadRecruiterData() {
         card.className = `card pipeline-card pipeline-card-${statusKey}`;
         const jobTitle = (a.job && a.job.title) || "Job";
         const candName = (a.user && a.user.fullName) || "Candidate";
-        const match = a.matchScore != null ? `${a.matchScore}%` : "—";
-        const hasResume = Boolean(a.resumeDownloadUrl);
+        const match = a.matchScore != null ? `${a.matchScore}%` : null;
+        const strengthPct = formatPercent(a.applicationStrengthPercent);
         const appliedAt = formatTs(a.appliedAt);
         card.innerHTML = `
           <div class="pipeline-head">
@@ -845,10 +1127,12 @@ async function loadRecruiterData() {
             ${statusBadge(a.status)}
           </div>
           <div class="job-meta-row" style="margin-top:6px;">
-            <span class="meta-chip">Match ${match}</span>
-            <span class="meta-chip ${hasResume ? "remote" : "onsite"}">${hasResume ? "Resume Available" : "No Resume"}</span>
+            ${strengthPct ? `<span class="meta-chip pipeline-strength-chip">Strength ${strengthPct}</span>` : ""}
+            ${match ? `<span class="meta-chip">Match ${match}</span>` : ""}
             <span class="meta-chip">Applied ${appliedAt}</span>
           </div>
+          ${pipelineStrengthHtml(a)}
+          ${pipelineProjectLinksHtml(a)}
           ${applicationTimelineHtml(a)}
           <div class="pipeline-actions">
             <button type="button" class="status-btn action-btn" data-id="${a.id}" data-status="SHORTLISTED">Shortlist</button>
@@ -875,4 +1159,4 @@ async function loadRecruiterData() {
 }
 
 setupTabs("dashboard-tab-btn", "tab-panel");
-ensureRecruiterProfile().then(loadRecruiterData);
+loadRecruiterProfileForm().then(loadRecruiterData);

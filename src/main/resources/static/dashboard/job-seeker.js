@@ -37,6 +37,36 @@ const chartState = {
   applications: [],
   filtersBound: false
 };
+
+const platformJobMetaById = new Map();
+
+async function ensurePlatformJobMeta() {
+  if (platformJobMetaById.size) return;
+  try {
+    const res = await apiFetch("/api/jobs/platform");
+    if (!res.ok) return;
+    const list = await res.json();
+    if (!Array.isArray(list)) return;
+    list.forEach((j) => {
+      if (j && j.id != null) platformJobMetaById.set(String(j.id), j);
+    });
+  } catch (_) {
+    // ignore — cards still render without partner label
+  }
+}
+
+function enrichJobWithPlatformMeta(job) {
+  const row = { ...job };
+  const meta = platformJobMetaById.get(String(row.jobId || row.id));
+  if (meta) {
+    row.platformJob = true;
+    row.postedByLabel = "Posted by HireNest Partner Network";
+    row.experienceLevel = row.experienceLevel || meta.experienceLevel;
+    row.category = row.category || meta.category;
+    row.roleType = row.roleType || meta.roleType;
+  }
+  return row;
+}
 let assessmentInProgress = false;
 let tabSwitchViolationHandled = false;
 let currentQuizAttemptId = null;
@@ -137,6 +167,22 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+/** Fix mojibake (e.g. â€") and use plain ASCII dashes in UI copy. */
+function normalizeDisplayText(value) {
+  if (value == null) return "";
+  return String(value)
+    .replace(/\u00e2\u0080\u0093/g, "-")
+    .replace(/\u00e2\u0080\u0094/g, "-")
+    .replace(/\u00e2\u0080\u0099/g, "'")
+    .replace(/â€™/g, "'")
+    .replace(/â€œ/g, '"')
+    .replace(/â€\u009d/g, '"')
+    .replace(/â€"/g, "-")
+    .replace(/â€“/g, "-")
+    .replace(/[\u2013\u2014]/g, "-")
+    .trim();
+}
+
 function renderSkillChips(skills, type) {
   if (!Array.isArray(skills) || !skills.length) return `<span class="muted">None</span>`;
   return `<div class="skill-chip-row">${skills
@@ -154,8 +200,8 @@ function renderRoadmapResources(items, levelLabel) {
       <ul class="roadmap-list">
         ${items.map((r) => `
           <li class="roadmap-resource-card">
-            <a href="${r.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.title || "Open resource")}</a>
-            <span class="roadmap-type-pill">${escapeHtml(r.type || "resource")}</span>
+            <a href="${r.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(normalizeDisplayText(r.title || "Open resource"))}</a>
+            <span class="roadmap-type-pill">${escapeHtml(normalizeDisplayText(r.type || "resource"))}</span>
           </li>
         `).join("")}
       </ul>
@@ -250,10 +296,12 @@ async function loadMatchedJobsWithFilters() {
   const jobsEl = document.getElementById("jobs");
   if (!jobsEl) return;
   setLoading("jobs", "Applying filters and ranking jobs...");
+  await ensurePlatformJobMeta();
   const query = buildMatchFilterQuery();
   const res = await apiFetch(`/api/matching/${userId}${query}`);
   const jobs = await res.json();
-  renderMatchedJobs(Array.isArray(jobs) ? jobs : []);
+  const enriched = Array.isArray(jobs) ? jobs.map(enrichJobWithPlatformMeta) : [];
+  renderMatchedJobs(enriched);
 }
 
 function renderMatchedJobs(recJobs) {
@@ -277,7 +325,15 @@ function renderMatchedJobs(recJobs) {
     const matchedSkillsHtml = renderSkillChips(j.matchedSkills || [], "match");
     const missingSkillsHtml = renderSkillChips(j.missingSkills || [], "missing");
     const learningHtml = renderLearningRecommendations(j.learningRoadmaps || [], j.learningRecommendations || []);
-    const companyName = escapeHtml(j.companyName || "Unknown company");
+    const companyName = escapeHtml(normalizeDisplayText(j.companyName || "Unknown company"));
+    const postedBy = j.postedByLabel
+      ? `<div class="partner-network-label">${escapeHtml(normalizeDisplayText(j.postedByLabel))}</div>`
+      : j.platformJob
+        ? `<div class="partner-network-label">Posted by HireNest Partner Network</div>`
+        : "";
+    const expChip = j.experienceLevel
+      ? `<span class="meta-chip">${escapeHtml(normalizeDisplayText(j.experienceLevel))}</span>`
+      : "";
     const label = escapeHtml(j.matchLabel || "Low Match");
     const labelClass = getMatchLabelClass(j.matchLabel);
     const rankingScore = j.rankingScore != null ? Number(j.rankingScore).toFixed(2) : "0.00";
@@ -290,6 +346,7 @@ function renderMatchedJobs(recJobs) {
         <div class="match-title-wrap">
           <b class="match-title">${escapeHtml(j.title || "")}</b>
           <div class="company-line">${companyName}</div>
+          ${postedBy}
         </div>
         <div class="match-badge-row">
           <span class="match-pill">${j.matchScore}% Match</span>
@@ -301,6 +358,7 @@ function renderMatchedJobs(recJobs) {
         <span class="meta-chip">${location}</span>
         <span class="meta-chip ${isRemote ? "remote" : "onsite"}">${isRemote ? "Remote" : "On-site"}</span>
         <span class="meta-chip">${salary}</span>
+        ${expChip}
       </div>
       <div class="match-explain-wrap">${explain}</div>
       ${gapSummary}
@@ -319,7 +377,7 @@ function renderMatchedJobs(recJobs) {
       </div>
       <div class="match-actions">
         <button class="save-btn" data-job="${j.jobId}">Save Job</button>
-        <button class="apply-btn" data-job="${j.jobId}">Apply</button>
+        <button type="button" class="apply-btn" data-job="${j.jobId}" data-title="${escapeHtml(j.title || "Job")}">Apply</button>
       </div>
     `;
     jobsEl.appendChild(card);
@@ -337,13 +395,133 @@ function renderMatchedJobs(recJobs) {
     });
   });
   document.querySelectorAll(".apply-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      await apiFetch(`/api/job-seeker/${userId}/apply/${btn.dataset.job}`, { method: "POST" });
-      showToast("Application submitted", "success");
-      await loadActivity();
+    btn.addEventListener("click", () => {
+      openApplyJobModal(btn.dataset.job, btn.dataset.title || "Job");
     });
   });
 }
+
+let applyModalJobId = null;
+
+function collectEnhancedApplyPayload() {
+  const availability = [...document.querySelectorAll('input[name="applyAvailability"]:checked')].map(
+    (el) => el.value
+  );
+  return {
+    githubLink: document.getElementById("applyGithub")?.value?.trim() || "",
+    portfolioLink: document.getElementById("applyPortfolio")?.value?.trim() || "",
+    driveLink: document.getElementById("applyDrive")?.value?.trim() || "",
+    projectDescription: document.getElementById("applyProjectDesc")?.value?.trim() || "",
+    interestedRoles: (document.getElementById("applyInterestedRoles")?.value || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    strongestSkills: (document.getElementById("applyStrongestSkills")?.value || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    contributionDescription: document.getElementById("applyContribution")?.value?.trim() || "",
+    availabilityTypes: availability
+  };
+}
+
+function renderApplyStrengthPreview(preview) {
+  const s = document.getElementById("applyStrengthPct");
+  const c = document.getElementById("applyConfidencePct");
+  const m = document.getElementById("applySkillMatchPct");
+  const i = document.getElementById("applyStrengthInsights");
+  if (s) s.textContent = preview?.applicationStrengthPercent != null ? `${Math.round(preview.applicationStrengthPercent)}%` : "—";
+  if (c) c.textContent = preview?.hiringConfidencePercent != null ? `${Math.round(preview.hiringConfidencePercent)}%` : "—";
+  if (m) m.textContent = preview?.skillMatchPercent != null ? `${Math.round(preview.skillMatchPercent)}%` : "—";
+  if (i) i.textContent = preview?.strengthInsights || "No insights yet.";
+}
+
+function openApplyJobModal(jobId, jobTitle) {
+  applyModalJobId = jobId;
+  const modal = document.getElementById("applyJobModal");
+  const titleEl = document.getElementById("applyJobModalTitle");
+  const hid = document.getElementById("applyJobId");
+  if (titleEl) titleEl.textContent = `Apply · ${jobTitle}`;
+  if (hid) hid.value = String(jobId);
+  renderApplyStrengthPreview(null);
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeApplyJobModal() {
+  const modal = document.getElementById("applyJobModal");
+  if (modal) modal.classList.add("hidden");
+  applyModalJobId = null;
+}
+
+async function previewApplyStrength() {
+  if (!applyModalJobId) return;
+  const payload = collectEnhancedApplyPayload();
+  const res = await apiFetch(`/api/job-seeker/${userId}/apply/${applyModalJobId}/preview`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.message || "Could not preview application strength", "error");
+    return;
+  }
+  renderApplyStrengthPreview(data);
+}
+
+async function submitEnhancedApplication(e) {
+  if (e) e.preventDefault();
+  if (!applyModalJobId) return;
+  const payload = collectEnhancedApplyPayload();
+  const formData = new FormData();
+  formData.append("payload", JSON.stringify(payload));
+  formData.append("githubLink", payload.githubLink);
+  formData.append("portfolioLink", payload.portfolioLink);
+  formData.append("driveLink", payload.driveLink);
+  formData.append("projectDescription", payload.projectDescription);
+  formData.append("interestedRoles", payload.interestedRoles.join(", "));
+  formData.append("strongestSkills", payload.strongestSkills.join(", "));
+  formData.append("contributionDescription", payload.contributionDescription);
+  formData.append("availabilityTypes", payload.availabilityTypes.join(", "));
+  const resume = document.getElementById("applyResumeFile")?.files?.[0];
+  const project = document.getElementById("applyProjectFile")?.files?.[0];
+  if (resume) formData.append("resume", resume);
+  if (project) formData.append("projectFile", project);
+  const submitBtn = document.getElementById("applySubmitBtn");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting…";
+  }
+  try {
+    const res = await apiFetch(`/api/job-seeker/${userId}/apply/${applyModalJobId}/enhanced`, {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.message || "Application failed", "error");
+      return;
+    }
+    showToast("Application submitted with project profile", "success");
+    closeApplyJobModal();
+    await loadActivity();
+    await loadDashboard();
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit application";
+    }
+  }
+}
+
+function wireApplyJobModal() {
+  document.getElementById("applyJobModalClose")?.addEventListener("click", closeApplyJobModal);
+  document.getElementById("applyJobModal")?.addEventListener("click", (ev) => {
+    if (ev.target?.id === "applyJobModal") closeApplyJobModal();
+  });
+  document.getElementById("applyPreviewBtn")?.addEventListener("click", () => void previewApplyStrength());
+  document.getElementById("enhancedApplyForm")?.addEventListener("submit", (ev) => void submitEnhancedApplication(ev));
+}
+wireApplyJobModal();
 
 function renderLevelLinks(linksByLevel) {
   if (!linksByLevel || typeof linksByLevel !== "object") return "";
@@ -354,7 +532,7 @@ function renderLevelLinks(linksByLevel) {
       const items = linksByLevel[lvl]
         .map((item) => {
           const url = (item && item.url) || "";
-          const label = escapeHtml((item && item.label) || "Open");
+          const label = escapeHtml(normalizeDisplayText((item && item.label) || "Open"));
           const safeUrl = url.replace(/'/g, "\\'");
           return `<li><button type="button" class="link-inline" onclick="openSkillLink('${safeUrl}')">${label}</button></li>`;
         })
@@ -773,6 +951,43 @@ function renderJobSeekerAiInsights(ai = {}) {
   `;
 }
 
+/** Mirrors backend ProfileCompletionUtil (7 checklist items). */
+function computeProfileCompletion(profile = {}, options = {}) {
+  const missing = [];
+  const quizAttempted = Boolean(options.quizAttempted);
+  const hasSkills = Boolean(String(profile.skills || "").trim());
+  const hasBio = Boolean(String(profile.bio || "").trim());
+  const hasExperience = profile.experienceYears != null && Number(profile.experienceYears) > 0;
+  const hasResume = Boolean(
+    String(profile.resumePath || "").trim() ||
+      String(profile.resumeFileName || profile.fileName || "").trim()
+  );
+  const hasPreferredRoles = Boolean(String(profile.preferredRoles || "").trim());
+  const hasLocation = Boolean(String(profile.location || "").trim());
+  const hasLocationOrRemote = hasLocation || Boolean(profile.remotePreferred);
+  let done = 0;
+  if (hasSkills) done++;
+  else missing.push("Add your skills");
+  if (hasBio) done++;
+  else missing.push("Add a short bio");
+  if (hasExperience) done++;
+  else missing.push("Add years of experience");
+  if (hasResume) done++;
+  else missing.push("Upload your resume");
+  if (quizAttempted) done++;
+  else missing.push("Attempt assessment quiz");
+  if (hasPreferredRoles) done++;
+  else missing.push("Set preferred roles");
+  if (hasLocationOrRemote) done++;
+  else missing.push("Set location or remote preference");
+  return {
+    profileCompletionPercentage: Math.round((done / 7) * 100),
+    missingProfileItems: missing
+  };
+}
+
+let lastDashboardQuizAttempted = false;
+
 function renderProfileCompletion(data = {}) {
   const percent = Number(data.profileCompletionPercentage || 0);
   const missing = Array.isArray(data.missingProfileItems) ? data.missingProfileItems : [];
@@ -914,7 +1129,10 @@ async function loadDashboard() {
       // Keep dashboard profile fallback
     }
   }
-  renderProfileCompletion(data);
+  lastDashboardQuizAttempted = Array.isArray(data.quizAttempts) && data.quizAttempts.length > 0;
+  renderProfileCompletion(
+    computeProfileCompletion(profile, { quizAttempted: lastDashboardQuizAttempted })
+  );
   renderJobSeekerAiInsights(data.aiInsights || {});
   document.getElementById("totalJobs").textContent = data.totalJobs || 0;
   document.getElementById("matchedJobsCount").textContent = data.matchedJobsCount || 0;
@@ -1219,6 +1437,22 @@ document.getElementById("resumeForm").addEventListener("submit", async (e) => {
     skills: mergedSkills,
     downloadUrl: payload && payload.downloadUrl
   });
+  const profileForCompletion = {
+    skills: document.getElementById("skills")?.value || mergedSkills,
+    bio: document.getElementById("bio")?.value || (payload && payload.bio) || "",
+    experienceYears:
+      document.getElementById("experienceYears")?.value ||
+      (payload && payload.experienceYears != null ? payload.experienceYears : null),
+    preferredRoles:
+      document.getElementById("preferredRoles")?.value || (payload && payload.preferredRoles) || "",
+    location: document.getElementById("location")?.value || (payload && payload.location) || "",
+    remotePreferred: document.getElementById("remotePreferred")?.checked,
+    resumeFileName: payload && (payload.resumeFileName || payload.fileName),
+    resumeUploadedAt: payload && payload.resumeUploadedAt
+  };
+  renderProfileCompletion(
+    computeProfileCompletion(profileForCompletion, { quizAttempted: lastDashboardQuizAttempted })
+  );
   await loadDashboard();
   // Upload response is authoritative for parsed fields; re-apply so the form matches without a manual refresh.
   applyResumePayloadToProfileForm(payload);
@@ -1457,7 +1691,7 @@ function applyQuizLearningFields(out) {
       resWrap.innerHTML = resources
         .filter((r) => r && r.url)
         .map((r) => {
-          const title = escapeHtml(r.title || "Resource");
+          const title = escapeHtml(normalizeDisplayText(r.title || "Resource"));
           const url = escapeHtml(String(r.url));
           return `<a class="quiz-learning-link" href="${url}" target="_blank" rel="noopener noreferrer">${title}</a>`;
         })

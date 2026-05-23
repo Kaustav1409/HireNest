@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recruiter Dashboard</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=20260522-layout">
   <style>
     #companyDescription.company-description-over-limit {
       border-color: #dc2626;
@@ -92,37 +92,44 @@
     </div>
     <div id="recruiterAiInsights" class="ai-insights-grid"></div>
 
-    <div class="row">
-      <div class="card dashboard-stat-card compact"><b>Jobs posted</b><div id="jobsPostedCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Candidate rows (pool)</b><div id="candidateRowsCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Avg skills / job</b><div id="avgSkillsPerJob">0</div></div>
+    <div class="dashboard-section-header dashboard-section-header--spaced">
+      <h3>Activity Metrics</h3>
+      <p class="muted">Live counts from your posted jobs and candidate pool.</p>
     </div>
-    <div class="row">
-      <div class="card dashboard-stat-card compact"><b>Applied</b><div id="appliedCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Shortlisted</b><div id="shortlistedCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Rejected</b><div id="rejectedCount">0</div></div>
-    </div>
-
-    <div class="dashboard-section-header" style="margin-top: 18px;">
-      <h3>Candidate Insights</h3>
-      <p class="muted">Quick snapshot of candidate pool quality and hiring traction.</p>
-    </div>
-    <div class="row">
-      <div class="card dashboard-stat-card compact"><b>Candidate rows (pool)</b><div id="candidateRowsCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Avg skills / job</b><div id="avgSkillsPerJob">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Jobs posted</b><div id="jobsPostedCount">0</div></div>
+    <div class="dashboard-stat-grid dashboard-stat-grid--3">
+      <div class="dashboard-stat-card dashboard-stat-card--metric">
+        <div class="dashboard-stat-label">Jobs posted</div>
+        <div class="dashboard-stat-value" id="jobsPostedCount">0</div>
+      </div>
+      <div class="dashboard-stat-card dashboard-stat-card--metric">
+        <div class="dashboard-stat-label">Candidate rows (pool)</div>
+        <div class="dashboard-stat-value" id="candidateRowsCount">0</div>
+      </div>
+      <div class="dashboard-stat-card dashboard-stat-card--metric">
+        <div class="dashboard-stat-label">Avg skills / job</div>
+        <div class="dashboard-stat-value" id="avgSkillsPerJob">0</div>
+      </div>
     </div>
 
-    <div class="dashboard-section-header" style="margin-top: 18px;">
+    <div class="dashboard-section-header dashboard-section-header--spaced">
       <h3>Application Pipeline</h3>
       <p class="muted">Status-based hiring workflow for faster decisions.</p>
     </div>
-    <div class="row">
-      <div class="card dashboard-stat-card compact"><b>Applied</b><div id="appliedCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Shortlisted</b><div id="shortlistedCount">0</div></div>
-      <div class="card dashboard-stat-card compact"><b>Rejected</b><div id="rejectedCount">0</div></div>
+    <div class="dashboard-stat-grid dashboard-stat-grid--3">
+      <div class="dashboard-stat-card dashboard-stat-card--metric">
+        <div class="dashboard-stat-label">Applied</div>
+        <div class="dashboard-stat-value" id="appliedCount">0</div>
+      </div>
+      <div class="dashboard-stat-card dashboard-stat-card--metric">
+        <div class="dashboard-stat-label">Shortlisted</div>
+        <div class="dashboard-stat-value" id="shortlistedCount">0</div>
+      </div>
+      <div class="dashboard-stat-card dashboard-stat-card--metric">
+        <div class="dashboard-stat-label">Rejected</div>
+        <div class="dashboard-stat-value" id="rejectedCount">0</div>
+      </div>
     </div>
-    <div id="applicationsPipeline"></div>
+    <div id="applicationsPipeline" class="pipeline-list"></div>
 
     <div class="dashboard-section-header" style="margin-top: 18px;">
       <h3>Analytics & Charts</h3>
@@ -138,7 +145,20 @@
       </div>
     </div>
 
-    <div class="chart-grid" style="margin-top: 16px;">
+    <div class="dashboard-section-header dashboard-section-header--spaced">
+      <h3>Platform Partner Jobs</h3>
+      <p class="muted">Preloaded roles from the HireNest Partner Network — available for matching and hiring analytics.</p>
+    </div>
+    <div class="meta-chip" id="platformJobsCountChip">Loading platform jobs…</div>
+    <div id="platformJobs" class="jobs-list-compact"></div>
+
+    <div class="dashboard-section-header dashboard-section-header--spaced">
+      <h3>My Posted Jobs</h3>
+      <p class="muted">Jobs you created as a recruiter.</p>
+    </div>
+    <div id="jobs" class="jobs-list-compact"></div>
+
+    <div class="chart-grid dashboard-chart-grid">
       <div class="card chart-card animate-on-scroll fade-up">
         <b>Job Performance (Views vs Applications)</b>
         <div class="muted" style="margin: 6px 0 10px;">Compare candidate views with application conversion.</div>
@@ -178,7 +198,8 @@
       <h3>Post Job</h3>
       <form id="jobForm">
         <input id="title" placeholder="Job title" required>
-        <textarea id="description" placeholder="Description" required></textarea>
+        <textarea id="description" placeholder="Description" required maxlength="10000"></textarea>
+        <p id="jobDescriptionHint" class="muted small">Description can be up to 10,000 characters.</p>
         <input id="requiredSkills" placeholder="Required skills (comma separated)" required>
         <input id="location" placeholder="Location">
         <div class="row">
@@ -187,10 +208,6 @@
         </div>
         <button type="submit">Post Job</button>
       </form>
-    </section>
-    <section class="card animate-on-scroll fade-up">
-      <h3>My Jobs</h3>
-      <div id="jobs"></div>
     </section>
     <section id="tabRecCandidates" class="card tab-panel hidden">
       <h3>Candidates by job</h3>
@@ -206,7 +223,6 @@
     </section>
   </main>
   <script src="/script.js"></script>
-  <script src="/js/api.js"></script>
   <script src="/js/ui.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <div id="candidateModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="candidateModalTitle">
@@ -218,6 +234,7 @@
       <div id="candidateModalBody" class="modal-body"></div>
     </div>
   </div>
-  <script src="/dashboard/recruiter.js?v=20260521-insights3"></script>
+  <script src="/js/api.js?v=20260521-profile-load"></script>
+  <script src="/dashboard/recruiter.js?v=20260522-pipeline"></script>
 </body>
 </html>
