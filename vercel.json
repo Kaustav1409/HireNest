@@ -1,4 +1,5 @@
 {
+  "buildCommand": "echo 'Static site — no build needed'",
   "outputDirectory": "src/main/resources/static",
   "cleanUrls": true,
   "rewrites": [
