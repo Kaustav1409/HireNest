@@ -72,6 +72,11 @@ if (Test-Path "target\jar-rebuild\BOOT-INF\classes") {
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "AuthService + QuizService compile OK"
 
+& javac -parameters -encoding UTF-8 -cp $compileCp -d "target/classes" `
+  "src/main/java/com/hirenest/backend/config/ProductionCorsConfig.java"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Host "ProductionCorsConfig compile OK"
+
 Copy-Item "src\main\resources\static\*" "target\classes\static\" -Recurse -Force -ErrorAction SilentlyContinue
 
 $rebuild = "target\jar-rebuild"
@@ -95,7 +100,8 @@ $overlays = @(
   "controller\JobController.class","controller\JobSeekerController.class",
   "seed\PlatformJobSeed.class","seed\PlatformJobCatalog.class",  "seed\PlatformJobSeeder.class",
   "util\ProfileCompletionUtil.class",
-  "service\DashboardService.class"
+  "service\DashboardService.class",
+  "config\ProductionCorsConfig.class"
 )
 foreach ($p in $overlays) {
   Get-ChildItem "target\classes\com\hirenest\backend\$p" -ErrorAction SilentlyContinue | ForEach-Object {
