@@ -103,9 +103,13 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email)
+        if (request == null || request.email == null || request.password == null) {
+            throw new BadRequestException("Email and password are required");
+        }
+        String normalizedEmail = request.email.trim().toLowerCase(Locale.ROOT);
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
-        if (!passwordEncoder.matches(request.password, user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(request.password, user.getPassword())) {
             throw new BadRequestException("Invalid credentials");
         }
         return buildLoginResponse(user);
