@@ -1,5 +1,6 @@
 {
-  "buildCommand": "echo 'Static site — no build needed'",
+  "framework": null,
+  "buildCommand": null,
   "outputDirectory": "src/main/resources/static",
   "cleanUrls": true,
   "rewrites": [
