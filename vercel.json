@@ -1,16 +1,14 @@
 {
   "framework": null,
-  "buildCommand": null,
-  "outputDirectory": "src/main/resources/static",
-  "cleanUrls": true,
+  "outputDirectory": "frontend",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://hirenest-backend.onrender.com/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://hirenest-backend-8c7o.onrender.com/api/$1"
     },
     {
-      "source": "/uploads/:path*",
-      "destination": "https://hirenest-backend.onrender.com/uploads/:path*"
+      "source": "/uploads/(.*)",
+      "destination": "https://hirenest-backend-8c7o.onrender.com/uploads/$1"
     }
   ]
 }
