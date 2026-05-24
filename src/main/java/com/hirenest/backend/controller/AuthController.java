@@ -8,11 +8,13 @@ import com.hirenest.backend.dto.AuthDtos.LoginResponse;
 import com.hirenest.backend.dto.AuthDtos.RegisterRequest;
 import com.hirenest.backend.dto.AuthDtos.ResetPasswordRequest;
 import com.hirenest.backend.dto.AuthDtos.SimpleMessageResponse;
-import com.hirenest.backend.entity.User;
 import com.hirenest.backend.repository.UserRepository;
 import com.hirenest.backend.service.AuthService;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Exposes all /api/auth/** endpoints.
- * Overrides the base JAR's AuthController (same package + class name).
+ * Overrides the base JAR's AuthController (same package + class name,
+ * so the Maven compiler replaces the prebuilt .class file).
  *
  * Public paths (no JWT required) — whitelisted in SecurityConfig:
  *   POST /api/auth/register
@@ -30,11 +33,13 @@ import org.springframework.web.bind.annotation.RestController;
  *   POST /api/auth/google
  *   POST /api/auth/forgot-password
  *   POST /api/auth/reset-password
- *   GET  /api/auth/debug-users   ← diagnostic; remove before production release
+ *   GET  /api/auth/debug-users   ← diagnostic; REMOVE before production release
  */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthService authService;
     private final UserRepository userRepository;
@@ -45,9 +50,16 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterRequest request) {
-        User user = authService.register(request);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<Map<String, Object>> register(@RequestBody RegisterRequest request) {
+        var user = authService.register(request);
+        // Return only safe scalar fields — avoids Jackson serialization issues
+        // with lazy-loaded JPA relationships on the User entity from the base JAR.
+        return ResponseEntity.ok(Map.of(
+                "userId",   user.getId()       != null ? user.getId()       : -1L,
+                "fullName", user.getFullName() != null ? user.getFullName() : "",
+                "email",    user.getEmail()    != null ? user.getEmail()    : "",
+                "role",     user.getRole()     != null ? user.getRole()     : ""
+        ));
     }
 
     @PostMapping("/login")
@@ -75,17 +87,24 @@ public class AuthController {
     }
 
     /**
-     * Diagnostic endpoint — returns all registered emails to verify user records.
+     * Diagnostic endpoint — returns all registered emails.
+     * Uses a JPQL projection query (SELECT u.email FROM User u) to avoid
+     * loading full User entities and triggering lazy-load exceptions.
      * REMOVE or restrict this before going to production.
      *
      * GET /api/auth/debug-users
      */
     @GetMapping("/debug-users")
     public ResponseEntity<List<String>> debugUsers() {
-        List<String> emails = userRepository.findAll()
-                .stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(emails);
+        log.info("[debug-users] endpoint called");
+        try {
+            List<String> emails = userRepository.findAllEmails();
+            log.info("[debug-users] total users found: {}", emails.size());
+            emails.forEach(e -> log.info("[debug-users] email: {}", e));
+            return ResponseEntity.ok(emails);
+        } catch (Exception ex) {
+            log.error("[debug-users] failed to query emails", ex);
+            return ResponseEntity.ok(Collections.emptyList());
+        }
     }
 }
