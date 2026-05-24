@@ -23,21 +23,18 @@ public class ProductionCorsConfig {
     public CorsFilter productionCorsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         
-        List<String> allowedOrigins = List.of(
-                "https://hire-nest-virid.vercel.app",
-                "http://localhost:3000",
-                "http://localhost:5173"
-        );
-        
-        config.setAllowedOrigins(allowedOrigins);
-        config.setAllowedOriginPatterns(List.of("https://*.vercel.app"));
+        config.setAllowedOriginPatterns(List.of(
+                "https://*.vercel.app",
+                "https://*.onrender.com",
+                "http://localhost:*"
+        ));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
-        log.info("CORS Configuration initialized. Allowed Origins: {}, Allowed Origin Patterns: {}", allowedOrigins, "https://*.vercel.app");
+        log.info("CORS Configuration initialized. Allowed Origin Patterns: {}", "https://*.vercel.app, https://*.onrender.com, http://localhost:*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
