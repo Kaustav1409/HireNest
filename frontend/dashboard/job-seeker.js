@@ -2,6 +2,25 @@ const userId = localStorage.getItem("hirenest_userId");
 const role = localStorage.getItem("hirenest_role");
 if (!userId || role !== "JOB_SEEKER") location.href = "/login.html";
 
+/**
+ * Deduplicate jobs by title + companyName (case-insensitive).
+ * Seeded jobs have different IDs but identical title/company,
+ * so we must key on content rather than database id.
+ */
+function dedupeJobsByTitleCompany(jobs) {
+  const dedupedJobs = [];
+  const seen = new Set();
+  jobs.forEach(job => {
+    const key = `${(job.title || "").trim().toLowerCase()}::${(job.companyName || "").trim().toLowerCase()}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      dedupedJobs.push(job);
+    }
+  });
+  console.log(`[dedupeJobs] original: ${jobs.length}, deduped: ${dedupedJobs.length}`);
+  return dedupedJobs;
+}
+
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
@@ -313,10 +332,8 @@ function renderMatchedJobs(recJobs) {
     return;
   }
 
-  // Deduplicate by jobId — guards against seeded/imported duplicate job records.
-  const uniqueJobs = recJobs.filter(
-    (job, index, self) => index === self.findIndex((j) => j.id === job.id || j.jobId === job.jobId)
-  );
+  // Deduplicate by title + companyName — seeded jobs have different IDs but same content.
+  const uniqueJobs = dedupeJobsByTitleCompany(recJobs);
 
   uniqueJobs.forEach((j) => {
     const card = document.createElement("div");
@@ -1021,10 +1038,8 @@ function renderOverviewRecommendedJobs(recJobs = []) {
     host.innerHTML = `<div class="tracking-empty">No recommended jobs available. Complete your profile first.</div>`;
     return;
   }
-  // Deduplicate by jobId before slicing top 3 for the overview snapshot.
-  const uniqueRecJobs = recJobs.filter(
-    (job, index, self) => index === self.findIndex((j) => j.id === job.id || j.jobId === job.jobId)
-  );
+  // Deduplicate by title + companyName — seeded jobs have different IDs but same content.
+  const uniqueRecJobs = dedupeJobsByTitleCompany(recJobs);
   const top = uniqueRecJobs.slice(0, 3);
   host.innerHTML = top
     .map((j) => {
@@ -1182,11 +1197,8 @@ async function loadDashboard() {
   const radarSelect = document.getElementById("radarJobFilter");
   if (radarSelect) {
     radarSelect.innerHTML = `<option value="ALL" selected>All Recommended Jobs</option>`;
-    // Deduplicate by jobId before populating — prevents repeated entries when the
-    // backend seeder has multiple jobs with the same title (e.g. "Software Engineer").
-    const uniqueRadarJobs = recJobs.filter(
-      (job, index, self) => index === self.findIndex((j) => j.jobId === job.jobId)
-    );
+    // Deduplicate by title + companyName — seeded jobs have different IDs but same content.
+    const uniqueRadarJobs = dedupeJobsByTitleCompany(recJobs);
     uniqueRadarJobs.slice(0, 8).forEach((j) => {
       const title = j.title || "Job";
       radarSelect.insertAdjacentHTML(
