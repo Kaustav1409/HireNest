@@ -313,7 +313,12 @@ function renderMatchedJobs(recJobs) {
     return;
   }
 
-  recJobs.forEach((j) => {
+  // Deduplicate by jobId — guards against seeded/imported duplicate job records.
+  const uniqueJobs = recJobs.filter(
+    (job, index, self) => index === self.findIndex((j) => j.id === job.id || j.jobId === job.jobId)
+  );
+
+  uniqueJobs.forEach((j) => {
     const card = document.createElement("div");
     card.className = "card match-card";
     const explain = j.explanation
@@ -381,7 +386,7 @@ function renderMatchedJobs(recJobs) {
       </div>
     `;
     jobsEl.appendChild(card);
-  });
+  }); // end uniqueJobs.forEach
 
   document.querySelectorAll(".save-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -1016,7 +1021,11 @@ function renderOverviewRecommendedJobs(recJobs = []) {
     host.innerHTML = `<div class="tracking-empty">No recommended jobs available. Complete your profile first.</div>`;
     return;
   }
-  const top = recJobs.slice(0, 3);
+  // Deduplicate by jobId before slicing top 3 for the overview snapshot.
+  const uniqueRecJobs = recJobs.filter(
+    (job, index, self) => index === self.findIndex((j) => j.id === job.id || j.jobId === job.jobId)
+  );
+  const top = uniqueRecJobs.slice(0, 3);
   host.innerHTML = top
     .map((j) => {
       const title = escapeHtml(j.title || "Job");
@@ -1173,7 +1182,12 @@ async function loadDashboard() {
   const radarSelect = document.getElementById("radarJobFilter");
   if (radarSelect) {
     radarSelect.innerHTML = `<option value="ALL" selected>All Recommended Jobs</option>`;
-    recJobs.slice(0, 8).forEach((j) => {
+    // Deduplicate by jobId before populating — prevents repeated entries when the
+    // backend seeder has multiple jobs with the same title (e.g. "Software Engineer").
+    const uniqueRadarJobs = recJobs.filter(
+      (job, index, self) => index === self.findIndex((j) => j.jobId === job.jobId)
+    );
+    uniqueRadarJobs.slice(0, 8).forEach((j) => {
       const title = j.title || "Job";
       radarSelect.insertAdjacentHTML(
         "beforeend",
