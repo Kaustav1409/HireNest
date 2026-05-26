@@ -106,27 +106,106 @@ public class AuthService {
         if (request == null || request.email == null || request.password == null) {
             throw new BadRequestException("Email and password are required");
         }
-        String normalizedEmail = request.email.trim().toLowerCase();
-        log.info("Login attempt for email: {}", normalizedEmail);
-        
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElse(null);
-        
-        log.info("User found: {}", user != null);
-        
+        String normalizedEmail = request.email.trim().toLowerCase(Locale.ROOT);
+        log.info("[LOGIN] Attempt for email: {}", normalizedEmail);
+
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+
         if (user == null) {
+            log.warn("[LOGIN] User NOT found for email: {}", normalizedEmail);
+            throw new BadRequestException("Invalid credentials");
+        }
+        log.info("[LOGIN] User found — id={}, role={}, authProvider={}",
+                user.getId(), user.getRole(), user.getAuthProvider());
+
+        String storedPassword = user.getPassword();
+        boolean hasStoredPassword = storedPassword != null && !storedPassword.isBlank();
+        boolean storedIsBCrypt = hasStoredPassword && storedPassword.startsWith("$2");
+
+        log.info("[LOGIN] Stored password present: {}, looks like BCrypt: {}",
+                hasStoredPassword, storedIsBCrypt);
+
+        if (!hasStoredPassword) {
+            log.warn("[LOGIN] User has NO stored password (Google-only account?)");
             throw new BadRequestException("Invalid credentials");
         }
 
-        boolean passwordMatches = user.getPassword() != null && passwordEncoder.matches(request.password, user.getPassword());
-        log.info("Password matches encoded: {}", passwordMatches);
-
-        if (!passwordMatches) {
-            if (!request.password.equals(user.getPassword())) {
+        if (storedIsBCrypt) {
+            // Normal BCrypt comparison
+            boolean matches = passwordEncoder.matches(request.password, storedPassword);
+            log.info("[LOGIN] BCrypt passwordEncoder.matches() result: {}", matches);
+            if (!matches) {
                 throw new BadRequestException("Invalid credentials");
             }
+        } else {
+            // Legacy plain-text password — compare directly, then auto-migrate to BCrypt
+            boolean legacyMatch = request.password.equals(storedPassword);
+            log.warn("[LOGIN] Legacy plain-text password detected for user id={}. Direct match: {}",
+                    user.getId(), legacyMatch);
+            if (!legacyMatch) {
+                throw new BadRequestException("Invalid credentials");
+            }
+            // Auto-migrate: re-encode password as BCrypt
+            String encoded = passwordEncoder.encode(request.password);
+            user.setPassword(encoded);
+            userRepository.save(user);
+            log.info("[LOGIN] Auto-migrated legacy password to BCrypt for user id={}", user.getId());
         }
+
         return buildLoginResponse(user);
+    }
+
+    /**
+     * Force-reset a user's password by email. Used by the migration/debug endpoint.
+     * The new password is BCrypt-encoded before storage.
+     */
+    public SimpleMessageResponse forceResetPassword(String email, String newPassword) {
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("Email is required");
+        }
+        if (newPassword == null || newPassword.isBlank() || newPassword.length() < 6) {
+            throw new BadRequestException("New password must be at least 6 characters");
+        }
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new NotFoundException("No user found with email: " + normalizedEmail));
+
+        String oldHash = user.getPassword();
+        boolean wasBCrypt = oldHash != null && oldHash.startsWith("$2");
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        log.info("[FORCE-RESET] Password reset for user id={}, email={}. Was BCrypt before: {}",
+                user.getId(), normalizedEmail, wasBCrypt);
+
+        SimpleMessageResponse response = new SimpleMessageResponse();
+        response.message = "Password has been reset successfully for " + normalizedEmail;
+        return response;
+    }
+
+    /**
+     * Re-encode all legacy (non-BCrypt) passwords in the database using the
+     * supplied default password. Returns count of migrated users.
+     */
+    public int migrateAllLegacyPasswords(String defaultPassword) {
+        if (defaultPassword == null || defaultPassword.isBlank() || defaultPassword.length() < 6) {
+            throw new BadRequestException("Default password must be at least 6 characters");
+        }
+        List<User> allUsers = userRepository.findAll();
+        int migrated = 0;
+        for (User user : allUsers) {
+            String pw = user.getPassword();
+            if (pw != null && !pw.isBlank() && !pw.startsWith("$2")) {
+                user.setPassword(passwordEncoder.encode(defaultPassword));
+                userRepository.save(user);
+                log.info("[MIGRATE] Re-encoded legacy password for user id={}, email={}",
+                        user.getId(), user.getEmail());
+                migrated++;
+            }
+        }
+        log.info("[MIGRATE] Total legacy passwords migrated: {}", migrated);
+        return migrated;
     }
 
     public LoginResponse googleAuth(GoogleAuthRequest request) {
