@@ -4087,3 +4087,237 @@ ul {
   gap: 10px;
   margin-top: 8px;
 }
+
+/* ================================================================
+   HireNest Footer — appended; does NOT modify any existing rule
+   ================================================================ */
+
+.ta-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: 48px;
+  border-top: 1px solid rgba(147, 197, 253, 0.18);
+  background: rgba(6, 14, 36, 0.62);
+  backdrop-filter: blur(14px);
+}
+
+.ta-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4, #22c55e);
+  opacity: 0.72;
+}
+
+.ta-footer-inner {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 52px clamp(20px, 4vw, 42px) 36px;
+}
+
+.ta-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 42px;
+  align-items: start;
+}
+
+/* ---------- Column base ---------- */
+.ta-footer-col {
+  min-width: 0;
+}
+
+/* ---------- Headings ---------- */
+.ta-footer-heading {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f8fbff;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.ta-footer-heading::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 36px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+}
+
+/* ---------- About column ---------- */
+.ta-footer-text {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: rgba(219, 234, 254, 0.78);
+}
+
+.ta-footer-text:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Quick Links ---------- */
+.ta-footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ta-footer-links li a {
+  color: rgba(219, 234, 254, 0.82);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 0;
+  display: inline-block;
+  position: relative;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.ta-footer-links li a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+  transition: width 0.3s ease;
+}
+
+.ta-footer-links li a:hover {
+  color: #7dd3fc;
+  transform: translateX(4px);
+}
+
+.ta-footer-links li a:hover::after {
+  width: 100%;
+}
+
+/* ---------- Contact column ---------- */
+.ta-footer-contact-block {
+  margin-bottom: 14px;
+}
+
+.ta-footer-contact-block:last-child {
+  margin-bottom: 0;
+}
+
+.ta-footer-contact-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.88);
+}
+
+.ta-footer-contact-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0ecff;
+}
+
+/* Team member cards */
+.ta-footer-member {
+  padding: 10px 12px;
+  margin-top: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(147, 197, 253, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.ta-footer-member:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(125, 211, 252, 0.35);
+}
+
+.ta-footer-member-name {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e0ecff;
+}
+
+.ta-footer-reg {
+  font-weight: 400;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.ta-footer-member-link {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(125, 211, 252, 0.9);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ta-footer-member-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.ta-footer-member-phone {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.78);
+}
+
+/* ---------- Copyright bar ---------- */
+.ta-footer-copyright {
+  text-align: center;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(147, 197, 253, 0.12);
+  background: rgba(4, 10, 28, 0.45);
+}
+
+.ta-footer-copyright small {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.72);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .ta-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .ta-footer-col--about {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .ta-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .ta-footer-inner {
+    padding: 36px 18px 28px;
+  }
+
+  .ta-footer-col--about {
+    grid-column: auto;
+  }
+}
