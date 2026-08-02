@@ -154,14 +154,7 @@ For step-by-step cloud deployment (Render, environment variables, database notes
 
 Built as a **Design Thinking and Methodology** group project—focused on skill-first hiring, transparent matching, and practical dashboards for both candidates and recruiters.
 
----
-
-## Contributors
-
-**[@Kaustav1409](https://github.com/Kaustav1409)** — sole contributor
-**[@Ashvini-2](https://github.com/Ashvini-2)** — contributor
-
----
+----
 
 ## License
 
